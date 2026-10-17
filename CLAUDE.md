@@ -7,9 +7,10 @@ Admins use it to configure the filter, control it (start/stop, gateway mode), an
 - `HANDOFF.md`: current state, decisions, and what to do next.
 - `docs/shared-contract.md`: the database contract with the filter. **Never change it in only one repo.**
 - `docs/maxiguard-feature-map.md`: every MaxiGuard panel feature we're matching.
+- `docs/references.md`: outside repos (protocol docs, servers, clients, PK2 tools), ranked, with licenses.
 - `.specify/memory/constitution.md`: project rules. They override everything else here.
 
-## References: AegisCore-SRO, go-sro
+## References (full ranked list with licenses: `docs/references.md`)
 https://github.com/ENGMElaraby/AegisCore-SRO is our open-source Go server for vSRO 1.188. Check it
 for anything about game data or game systems behind a panel page: regions, items, skills, jobs,
 party, pets, alchemy, PK, and so on (`_docs/sr-gameserver-*.md`, `_docs/vsro188-*.md`, `db/`), and
@@ -20,6 +21,9 @@ against our real DB.
 Secondary: https://github.com/ENGMElaraby/go-sro, our fork of `ferdoran/go-sro`, the older Go server
 AegisCore grew from (last updated 2024-10). Use it only when AegisCore lacks something. If the two
 disagree, AegisCore wins.
+
+For reading game text data (region, item, skill names) out of `Media.pk2`, see
+https://github.com/ferdoran/pk2 (MIT). For regions and navmesh, see https://github.com/ferdoran/joymesh.
 
 ## Workflow: Spec-Driven Development (GitHub Spec Kit)
 Every feature goes through the spec-kit skills in `.claude/skills/`:
