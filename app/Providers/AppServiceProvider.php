@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\AuditLogger;
 use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -15,6 +16,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuditLogger::class, fn () => new AuditLogger);
+
+        // datetime2(3) on SQL Server instead of the older datetime (shared contract: datetime2, UTC).
+        Schema::defaultTimePrecision(3);
     }
 
     /**

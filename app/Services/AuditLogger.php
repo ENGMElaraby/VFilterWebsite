@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use BackedEnum;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +61,7 @@ class AuditLogger
             'ip' => $resolvedType === 'console' ? null : request()->ip(),
             'action' => $action,
             'target_type' => $target === null ? null : Str::snake(class_basename($target)),
-            'target_id' => $target === null ? null : (string) $target->getKey(),
+            'target_id' => $target === null ? null : $this->keyOf($target),
             'old_values' => $old === [] ? null : $this->redact($old),
             'new_values' => $new === [] ? null : $this->redact($new),
         ]);
@@ -77,6 +78,13 @@ class AuditLogger
     public function transaction(Closure $callback): mixed
     {
         return DB::connection((new AuditLog)->getConnectionName())->transaction($callback);
+    }
+
+    private function keyOf(Model $target): string
+    {
+        $key = $target->getKey();
+
+        return (string) ($key instanceof BackedEnum ? $key->value : $key);
     }
 
     /**

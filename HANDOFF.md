@@ -1,7 +1,8 @@
 # HANDOFF: VFilterWebsite
 
 **Date:** 2026-10-17 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
-(branch `001-auth-and-shell`, 93 tests green). Next: merge 001, then `002-contract-schema`.
+(PR #1 open). Feature **002-contract-schema is built** (branch `002-contract-schema`, from 001).
+Next: `003-dashboard-and-control`.
 
 ## What exists
 | Path | What |
@@ -9,7 +10,7 @@
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.1.1 draft |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.2.0 draft (tables built in 002) |
 | `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
 | `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
 | `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
@@ -42,6 +43,7 @@ composer install && cp .env.example .env && php artisan key:generate
 # SQL Server: fill DB_* in .env. Local preview without SQL Server: in .env set
 #   DB_FILTER_DRIVER=sqlite and DB_DATABASE=<absolute path>/database/database.sqlite
 php artisan migrate
+php artisan vfilter:install-defaults        # default modules, cooldowns, core settings
 php artisan vfilter:create-owner          # the one owner; 2FA is set up at first sign-in
 php artisan serve                         # http://127.0.0.1:8000/admin
 ```
@@ -54,7 +56,7 @@ Run these in order. Each one runs specify → clarify → plan → tasks → ana
 ```
 /speckit-specify Admin panel shell for VFilter: login with email+password, 2FA for owner, roles owner/admin/viewer, user management (owner only), audit log page showing who changed what, English + Arabic (RTL) language switch, dark/light theme. Uses the VFILTER SQL Server database as the default connection. See docs/shared-contract.md (website-only tables).
 ```
-**002-contract-schema**
+**002-contract-schema** — ✅ done (branch `002-contract-schema`)
 ```
 /speckit-specify Create all VFILTER contract tables exactly as in docs/shared-contract.md as Laravel migrations on the filter connection, plus Eloquent models, a SettingsRepository that bumps filter_config_version and writes audit_log in one transaction, and seeders for default modules and settings.
 ```

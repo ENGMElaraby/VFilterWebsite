@@ -54,6 +54,7 @@ Don't write feature code without a spec and plan in `specs/`. Small fixes and ch
 composer install && npm install
 cp .env.example .env && php artisan key:generate
 php artisan migrate --database=filter
+php artisan vfilter:install-defaults                  # add missing default filter config (safe to re-run)
 php artisan vfilter:create-owner                      # create the one panel owner
 php artisan vfilter:reset-owner --password --two-factor   # recover owner access
 composer run dev          # serve + queue + vite
@@ -63,8 +64,11 @@ php artisan test          # Pest
 ```
 
 ## Conventions
-- Settings are read and written only through `App\Settings\SettingsRepository`, which bumps
-  `filter_config_version` and writes `audit_log` in the same transaction.
+- Filter configuration is written only through `App\Settings\SettingsRepository` (settings) and
+  `App\Config\ConfigStore` (modules, lists, area rules, cooldowns, GA permissions). Both write only
+  what changed, audit each change and bump that area's row in `filter_config_version`, in one
+  transaction. Never write `filter_*` config tables directly. Filter-owned tables (`filter_status`,
+  `filter_sessions`, `filter_logs`) are read-only for the website.
 - Filter control goes only through `filter_commands`. The website never opens a socket to the filter.
 - Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old.
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.
