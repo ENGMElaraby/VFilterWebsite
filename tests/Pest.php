@@ -1,5 +1,9 @@
 <?php
 
+use App\Enums\Filter\ModuleState;
+use App\Enums\Filter\ModuleType;
+use App\Models\Filter\FilterModule;
+use App\Models\Filter\FilterStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +48,37 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Fixture: Gateway, Download and Agent1..AgentN written straight to filter_modules (no audit,
+ * no version bump). Use ConfigStore in tests that check those.
+ */
+function seedFilterModules(int $agents = 1, bool $enabled = true): void
 {
-    // ..
+    $row = fn (ModuleType $type, string $name, int $port): array => [
+        'type' => $type, 'name' => $name, 'module_ip' => '10.0.0.10', 'module_port' => $port,
+        'guard_ip' => '203.0.113.10', 'guard_port' => $port, 'enabled' => $enabled,
+    ];
+
+    FilterModule::query()->create($row(ModuleType::Gateway, 'Gateway', 15779));
+    FilterModule::query()->create($row(ModuleType::Download, 'Download', 15881));
+
+    foreach (range(1, $agents) as $number) {
+        FilterModule::query()->create($row(ModuleType::Agent, 'Agent'.$number, 15883 + $number));
+    }
+}
+
+/**
+ * Fixture: what the filter would write to filter_status for one module. Heartbeat defaults to now.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function reportStatus(string $module, array $attributes = []): void
+{
+    FilterStatus::query()->updateOrCreate(['module' => $module], array_merge([
+        'state' => ModuleState::Running->value,
+        'online_count' => 0,
+        'connections' => 0,
+        'started_at' => now('UTC')->subHour(),
+        'heartbeat_at' => now('UTC'),
+    ], $attributes));
 }

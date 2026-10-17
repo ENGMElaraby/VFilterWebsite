@@ -3,6 +3,22 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// SRO_VT_ACCOUNT / SRO_VT_SHARD / SRO_VT_LOG, read-only (spec 003, research R5). Configured only when the
+// database name is set; host and credentials default to the VFILTER ones.
+$gameConnection = fn (?string $database): array => [
+    'driver' => 'sqlsrv',
+    'host' => env('DB_GAME_HOST', env('DB_HOST', 'localhost')),
+    'port' => env('DB_GAME_PORT', env('DB_PORT', '1433')),
+    'database' => $database,
+    'username' => env('DB_GAME_USERNAME', env('DB_USERNAME', '')),
+    'password' => env('DB_GAME_PASSWORD', env('DB_PASSWORD', '')),
+    'charset' => env('DB_CHARSET', 'utf8'),
+    'prefix' => '',
+    'prefix_indexes' => true,
+    'encrypt' => env('DB_ENCRYPT', 'yes'),
+    'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+];
+
 return [
 
     /*
@@ -122,6 +138,10 @@ return [
                 'encrypt' => env('DB_ENCRYPT', 'yes'),
                 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
             ],
+
+        'account' => $gameConnection(env('DB_ACCOUNT_DATABASE')),
+        'shard' => $gameConnection(env('DB_SHARD_DATABASE')),
+        'log' => $gameConnection(env('DB_LOG_DATABASE')),
 
     ],
 

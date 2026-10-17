@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Filter\FilterCommand;
+use App\Models\Filter\FilterModule;
+use App\Policies\FilterCommandPolicy;
+use App\Policies\FilterModulePolicy;
 use App\Services\AuditLogger;
 use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -15,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuditLogger::class, fn () => new AuditLogger);
+
+        // datetime2(3) on SQL Server instead of the older datetime (shared contract: datetime2, UTC).
+        Schema::defaultTimePrecision(3);
     }
 
     /**
@@ -22,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(FilterCommand::class, FilterCommandPolicy::class);
+        Gate::policy(FilterModule::class, FilterModulePolicy::class);
+
         /** @var list<string> $proxies */
         $proxies = config('vfilter.trusted_proxies', []);
 

@@ -54,6 +54,7 @@ Don't write feature code without a spec and plan in `specs/`. Small fixes and ch
 composer install && npm install
 cp .env.example .env && php artisan key:generate
 php artisan migrate --database=filter
+php artisan vfilter:install-defaults                  # add missing default filter config (safe to re-run)
 php artisan vfilter:create-owner                      # create the one panel owner
 php artisan vfilter:reset-owner --password --two-factor   # recover owner access
 composer run dev          # serve + queue + vite
@@ -63,10 +64,20 @@ php artisan test          # Pest
 ```
 
 ## Conventions
-- Settings are read and written only through `App\Settings\SettingsRepository`, which bumps
-  `filter_config_version` and writes `audit_log` in the same transaction.
-- Filter control goes only through `filter_commands`. The website never opens a socket to the filter.
-- Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old.
+- Filter configuration is written only through `App\Settings\SettingsRepository` (settings) and
+  `App\Config\ConfigStore` (modules, lists, area rules, cooldowns, GA permissions). Both write only
+  what changed, audit each change and bump that area's row in `filter_config_version`, in one
+  transaction. Never write `filter_*` config tables directly. Filter-owned tables (`filter_status`,
+  `filter_sessions`, `filter_logs`) are read-only for the website.
+- Filter control goes only through `filter_commands`, written only by `App\Filter\CommandQueue` (authorises,
+  blocks duplicates per target, audits `command.queued`/`command.cancelled`). The website never opens a socket
+  to the filter. It may change a command's status only `pending → cancelled` (contract 0.3.0).
+- Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old, measured with
+  `App\Filter\DatabaseClock` (the DB server's clock). Read status through `App\Filter\FilterOverview`.
+- Game DB connections `account`/`shard`/`log` are configured only when `DB_ACCOUNT_DATABASE` /
+  `DB_SHARD_DATABASE` / `DB_LOG_DATABASE` is set (host/credentials default to `DB_*`, override with `DB_GAME_*`).
+- Filament renders an action even when it is hidden: in custom views echo only actions that pass `isVisible()`
+  (see `ModuleStatusWidget::visibleActions()`).
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.
 - Roles: `owner` > `admin` > `viewer`. Every route and Filament page has a policy.
 - Times are stored in UTC and shown in `APP_DISPLAY_TIMEZONE` (`config('vfilter.display_timezone')`).
