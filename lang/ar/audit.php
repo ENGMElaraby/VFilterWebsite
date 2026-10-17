@@ -36,6 +36,8 @@ return [
         'ga_permissions.created' => 'إضافة مساعد اللعبة',
         'ga_permissions.updated' => 'تعديل مساعد اللعبة',
         'ga_permissions.deleted' => 'حذف مساعد اللعبة',
+        'command.queued' => 'أُرسل أمر',
+        'command.cancelled' => 'أُلغي أمر',
     ],
 
     'actor_types' => [

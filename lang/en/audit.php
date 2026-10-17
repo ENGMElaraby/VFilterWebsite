@@ -36,6 +36,8 @@ return [
         'ga_permissions.created' => 'Game Assistant added',
         'ga_permissions.updated' => 'Game Assistant changed',
         'ga_permissions.deleted' => 'Game Assistant removed',
+        'command.queued' => 'Command queued',
+        'command.cancelled' => 'Command cancelled',
     ],
 
     'actor_types' => [

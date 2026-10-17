@@ -22,6 +22,8 @@ Later features add their own (`setting.updated`, `command.queued`, …) using th
 | `user.password_reset` | user/console | user | – |
 | `user.two_factor_reset` | user/console | user | – |
 | `user.password_changed` | user | user (self) | – |
+| `command.queued` | user | filter_command | – → {command, target, payload} (003) |
+| `command.cancelled` | user | filter_command | {status: pending} → {status: cancelled} (003) |
 
 ## Rules
 1. Never store: `password`, `remember_token`, `app_authentication_secret`,
