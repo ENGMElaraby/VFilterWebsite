@@ -60,7 +60,7 @@ description: "Tasks for 001 Admin Panel Shell"
 - [ ] T021 [P] [US1] tests/Feature/Auth/AccessTest.php: guest → every panel route redirects to `/admin/login`; intended URL restored after sign-in
 - [ ] T022 [P] [US1] tests/Feature/Auth/LoginTest.php (Livewire Filament Login): valid credentials proceed to MFA; wrong password and disabled user show the same generic error; `last_login_at` set after full sign-in; audit `auth.login`, `auth.login_failed` (actor_label = attempted email), `auth.logout`
 - [ ] T023 [P] [US1] tests/Feature/Auth/LoginThrottleTest.php: 5 failures for same email+IP within 60 s → 6th refused with throttle message even with correct password; different email from same IP not blocked by the email key; `auth.lockout` audited
-- [ ] T024 [P] [US1] tests/Feature/Auth/TwoFactorTest.php: user without 2FA is forced to setup page for every panel URL; setup shows recovery codes; challenge accepts current TOTP, rejects reused code, accepts a recovery code once and rejects it the second time (`auth.recovery_code_used` audited); profile shows no "disable" action; `auth.two_factor_enabled` audited
+- [ ] T024 [P] [US1] tests/Feature/Auth/TwoFactorTest.php: user without 2FA is forced to setup page for every panel URL; setup shows recovery codes; challenge accepts current TOTP, rejects reused code, accepts a recovery code once and rejects it the second time (`auth.recovery_code_used` audited); 6th wrong code within 60 s is refused by the throttle and failures are audited (`auth.two_factor_failed`); profile shows no "disable" action; `auth.two_factor_enabled` audited
 
 ### Implementation
 
@@ -70,7 +70,7 @@ description: "Tasks for 001 Admin Panel Shell"
 - [ ] T028 [US1] Create app/Filament/Pages/Auth/Login.php extending Filament `Login`: before authenticating, `RateLimiter` key `login:{lower(email)}|{ip}` with `vfilter.login.max_attempts`/`decay_seconds`; on hit fire `Lockout` and show Filament's throttled notification; clear key on success
 - [ ] T029 [US1] Create app/Listeners/RecordAuthEvents.php for `Login` (also sets `last_login_at`), `Failed`, `Logout`, `Lockout` → AuditLogger; register in app/Providers/AppServiceProvider.php
 - [ ] T030 [US1] In app/Providers/Filament/AdminPanelProvider.php: `->login(Login::class)`, `->multiFactorAuthentication([MandatoryAppAuthentication::make()->recoverable()->recoveryCodeCount(8)], isRequired: true)`, `->profile()` placeholder (finished in US4)
-- [ ] T031 [US1] Make T019–T024 pass; run `php artisan test --filter=US1-related` groups, `phpstan`, `pint`
+- [ ] T031 [US1] Make T019–T024 pass; run `php artisan test tests/Feature/Auth tests/Feature/Console tests/Feature/Audit tests/Feature/Security`, `phpstan`, `pint`
 
 **Checkpoint**: MVP – owner can sign in securely; all auth events audited.
 
@@ -98,6 +98,7 @@ description: "Tasks for 001 Admin Panel Shell"
 - [ ] T040 [US2] Create app/Filament/Resources/Users/UserResource.php (+ Pages List/Create/Edit, Schemas/UserForm.php, Tables/UsersTable.php) in group Administration: form fields name, email, role (select from `UserRole::assignable()`), password on create (`Password::defaults()`, confirmed) → sets `must_change_password=1`; table columns name, email, role badge, active, 2FA enrolled, last sign-in; row actions Disable/Enable, Reset password (modal with new password), Reset two-factor (confirm) – hidden for the owner row
 - [ ] T041 [US2] Create app/Support/EndUserSessions.php helper (delete `sessions` rows by `user_id`, rotate `remember_token`) used by actions, console reset and password reset listener
 - [ ] T042 [US2] Create app/Http/Middleware/EnsureUserIsActive.php and app/Http/Middleware/EnsurePasswordIsChanged.php; add both to `authMiddleware()` after `Authenticate`
+- [ ] T042a [US1] Create app/Http/Middleware/PreventBackHistory.php setting `Cache-Control: no-store, no-cache, must-revalidate, private` and `Pragma: no-cache` on every panel response; add to panel `middleware()`; test in tests/Feature/Auth/AccessTest.php (header present on `/admin` and `/admin/login`)
 - [ ] T043 [US2] Create app/Filament/Pages/ChangePassword.php (current password, new password `Password::defaults()` confirmed; clears flag; audit `user.password_changed`; hidden from navigation)
 - [ ] T044 [US2] Enable email reset in AdminPanelProvider: `->passwordReset()` only when `config('mail.default')` not in [`log`, `array`]; set `auth.passwords.users.expire=60`; listener for `PasswordReset` event → audit + EndUserSessions; audit `auth.password_reset_requested` from a custom `RequestPasswordReset` page (neutral response unchanged)
 - [ ] T045 [US2] Make T032–T037 pass; phpstan; pint
@@ -136,13 +137,13 @@ description: "Tasks for 001 Admin Panel Shell"
 
 - [ ] T052 [P] [US4] tests/Feature/Preferences/LocaleTest.php: guest with `Accept-Language: ar` gets Arabic login with `dir="rtl"`; other languages get English; signed-in user's `locale` applied on every page; switching saves to the user and audits `user.updated`
 - [ ] T053 [P] [US4] tests/Feature/Preferences/ThemeTest.php: profile saves `theme` ∈ {light, dark, system}; page HTML contains the head script that sets `localStorage.theme` to the saved value
-- [ ] T054 [P] [US4] tests/Feature/Preferences/ProfileTest.php: changing email or password requires current password; no 2FA disable action; recovery codes can be regenerated
+- [ ] T054 [P] [US4] tests/Feature/Preferences/ProfileTest.php: changing email or password requires current password; a profile password change writes `user.password_changed` with no secret values; no 2FA disable action; recovery codes can be regenerated
 - [ ] T055 [P] [US4] tests/Feature/Preferences/TranslationsTest.php: every key in lang/en/{panel,roles,audit}.php exists in lang/ar (and vice versa)
 
 ### Implementation
 
 - [ ] T056 [US4] Create app/Http/Middleware/ApplyUserPreferences.php (user locale, else `Accept-Language` ar/en, else `en`; also session `locale` for guests) and add after `StartSession` in panel `middleware()`
-- [ ] T057 [US4] Create app/Filament/Pages/Auth/EditProfile.php extending Filament `EditProfile`: add `locale` (select en/ar) and `theme` (select light/dark/system) fields; current password required for email/password change; register with `->profile(EditProfile::class, isSimple: false)`
+- [ ] T057 [US4] Create app/Filament/Pages/Auth/EditProfile.php extending Filament `EditProfile`: add `locale` (select en/ar) and `theme` (select light/dark/system) fields; current password required for email/password change; a password change here audits `user.password_changed`; register with `->profile(EditProfile::class, isSimple: false)`
 - [ ] T058 [US4] Add user-menu items in AdminPanelProvider (`->userMenuItems`): "English"/"العربية" switch and theme switch that save to the user; add a language link on the login page via `PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`; disable Filament's built-in theme switcher (`->darkMode(true)` kept, switcher replaced)
 - [ ] T059 [US4] Add `PanelsRenderHook::HEAD_START` view resources/views/filament/theme-sync.blade.php that writes the user's `theme` into `localStorage.theme` before Filament's script runs
 - [ ] T060 [US4] Fill lang/en/panel.php + lang/ar/panel.php (navigation groups, user menu, profile fields, change password page, throttle and generic messages) and lang/en/roles.php + lang/ar/roles.php
@@ -153,6 +154,7 @@ description: "Tasks for 001 Admin Panel Shell"
 ## Phase 7: Polish & cross-cutting
 
 - [ ] T062 [P] tests/Feature/Security/RouteAuthorizationTest.php: iterate every registered `/admin` route and assert guest → redirect, viewer → only allowed pages (SC-003)
+- [ ] T062b [P] tests/Feature/Audit/AuditLogPerformanceTest.php tagged `@group sqlsrv` (skipped on SQLite): seed 1,000,000 `audit_log` rows, assert the first page query with each filter runs under 2 s (SC-007)
 - [ ] T063 [P] Update docs/shared-contract.md in **both** repos (VFilterWebsite and ../VFilter): version 0.1.0 → 0.1.1 (PATCH), note that website-only table columns are defined in `specs/001-auth-and-shell/data-model.md`
 - [ ] T064 [P] Update HANDOFF.md (status: 001 built; next 002) and CLAUDE.md commands (`vfilter:create-owner`, `vfilter:reset-owner`)
 - [ ] T065 Run the full quickstart.md "Tests only" section; then, if a SQL Server is reachable, the SQL Server section and scenarios 1–9
