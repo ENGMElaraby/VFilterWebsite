@@ -135,19 +135,19 @@ description: "Tasks for 001 Admin Panel Shell"
 
 ### Tests (write first, must fail)
 
-- [ ] T052 [P] [US4] tests/Feature/Preferences/LocaleTest.php: guest with `Accept-Language: ar` gets Arabic login with `dir="rtl"`; other languages get English; signed-in user's `locale` applied on every page; switching saves to the user and audits `user.updated`
-- [ ] T053 [P] [US4] tests/Feature/Preferences/ThemeTest.php: profile saves `theme` ∈ {light, dark, system}; page HTML contains the head script that sets `localStorage.theme` to the saved value
-- [ ] T054 [P] [US4] tests/Feature/Preferences/ProfileTest.php: changing email or password requires current password; a profile password change writes `user.password_changed` with no secret values; no 2FA disable action; recovery codes can be regenerated
-- [ ] T055 [P] [US4] tests/Feature/Preferences/TranslationsTest.php: every key in lang/en/{panel,roles,audit}.php exists in lang/ar (and vice versa)
+- [X] T052 [P] [US4] tests/Feature/Preferences/LocaleTest.php: guest with `Accept-Language: ar` gets Arabic login with `dir="rtl"`; other languages get English; signed-in user's `locale` applied on every page; switching saves to the user and audits `user.updated`
+- [X] T053 [P] [US4] tests/Feature/Preferences/ThemeTest.php: profile saves `theme` ∈ {light, dark, system}; page HTML contains the head script that sets `localStorage.theme` to the saved value
+- [X] T054 [P] [US4] tests/Feature/Preferences/ProfileTest.php: changing email or password requires current password; a profile password change writes `user.password_changed` with no secret values; no 2FA disable action; recovery codes can be regenerated
+- [X] T055 [P] [US4] tests/Feature/Preferences/TranslationsTest.php: every key in lang/en/{panel,roles,audit}.php exists in lang/ar (and vice versa)
 
 ### Implementation
 
-- [ ] T056 [US4] Create app/Http/Middleware/ApplyUserPreferences.php (user locale, else `Accept-Language` ar/en, else `en`; also session `locale` for guests) and add after `StartSession` in panel `middleware()`
-- [ ] T057 [US4] Create app/Filament/Pages/Auth/EditProfile.php extending Filament `EditProfile`: add `locale` (select en/ar) and `theme` (select light/dark/system) fields; current password required for email/password change; a password change here audits `user.password_changed`; register with `->profile(EditProfile::class, isSimple: false)`
-- [ ] T058 [US4] Add user-menu items in AdminPanelProvider (`->userMenuItems`): "English"/"العربية" switch and theme switch that save to the user; add a language link on the login page via `PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`; disable Filament's built-in theme switcher (`->darkMode(true)` kept, switcher replaced)
-- [ ] T059 [US4] Add `PanelsRenderHook::HEAD_START` view resources/views/filament/theme-sync.blade.php that writes the user's `theme` into `localStorage.theme` before Filament's script runs
-- [ ] T060 [US4] Fill lang/en/panel.php + lang/ar/panel.php (navigation groups, user menu, profile fields, change password page, throttle and generic messages) and lang/en/roles.php + lang/ar/roles.php
-- [ ] T061 [US4] Make T052–T055 pass; phpstan; pint
+- [X] T056 [US4] Create app/Http/Middleware/ApplyUserPreferences.php (user locale, else `Accept-Language` ar/en, else `en`; also session `locale` for guests) and add after `StartSession` in panel `middleware()`
+- [X] T057 [US4] Create app/Filament/Pages/Auth/EditProfile.php extending Filament `EditProfile`: add `locale` (select en/ar) and `theme` (select light/dark/system) fields; current password required for email/password change; a password change here audits `user.password_changed`; register with `->profile(EditProfile::class, isSimple: false)`
+- [X] T058 [US4] Add user-menu items in AdminPanelProvider (`->userMenuItems`): "English"/"العربية" switch and theme switch that save to the user; add a language link on the login page via `PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`; keep Filament's built-in theme switcher; its `theme-changed` event is posted to `POST /admin/preferences/theme` (decided during implement: one switcher, server is the source of truth)
+- [X] T059 [US4] Add `PanelsRenderHook::HEAD_START` view resources/views/filament/theme-sync.blade.php that writes the user's `theme` into `localStorage.theme` before Filament's script runs
+- [X] T060 [US4] Fill lang/en/panel.php + lang/ar/panel.php (navigation groups, user menu, profile fields, change password page, throttle and generic messages) and lang/en/roles.php + lang/ar/roles.php
+- [X] T061 [US4] Make T052–T055 pass; phpstan; pint
 
 ---
 

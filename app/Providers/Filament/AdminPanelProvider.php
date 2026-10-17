@@ -3,12 +3,16 @@
 namespace App\Providers\Filament;
 
 use App\Auth\MandatoryAppAuthentication;
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\RequestPasswordReset;
+use App\Http\Middleware\ApplyUserPreferences;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\RestrictToAllowedIps;
+use App\Support\PanelLocale;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -17,7 +21,10 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -40,7 +47,15 @@ class AdminPanelProvider extends PanelProvider
                 isRequired: true,
             )
             ->passwordReset(RequestPasswordReset::class)
-            ->profile()
+            ->profile(EditProfile::class, isSimple: false)
+            ->userMenuItems([
+                Action::make('switchLocale')
+                    ->label(fn (): string => PanelLocale::name(PanelLocale::other(app()->getLocale())))
+                    ->icon(Heroicon::OutlinedLanguage)
+                    ->url(fn (): string => route('panel.locale', PanelLocale::other(app()->getLocale()))),
+            ])
+            ->renderHook(PanelsRenderHook::HEAD_START, fn (): View => view('filament.theme-sync'))
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn (): View => view('filament.login-language'))
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -74,6 +89,8 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // Persistent so Livewire requests (form saves, notifications) use the same language.
+            ->middleware([ApplyUserPreferences::class], isPersistent: true)
             ->authMiddleware([
                 Authenticate::class,
                 EnsurePasswordIsChanged::class,

@@ -70,4 +70,13 @@ return [
             'until' => 'Until',
         ],
     ],
+    'profile' => [
+        'locale' => 'Language',
+        'theme' => 'Theme',
+        'themes' => [
+            'light' => 'Light',
+            'dark' => 'Dark',
+            'system' => 'Same as device',
+        ],
+    ],
 ];
