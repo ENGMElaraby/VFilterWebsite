@@ -66,16 +66,16 @@ description: "Tasks for 002 Shared Contract Schema and Settings Repository"
 
 ## Phase 5: User Story 3 – Safe defaults (P2)
 
-- [ ] T024 [US3] tests/Feature/Console/InstallDefaultsTest.php: empty DB → Gateway/Download/Agent1 disabled with vSRO default ports, 17 cooldowns at 0, 6 counter rows, core settings with defaults; second run adds 0 rows and keeps changed values; one `config.defaults_installed` audit entry (actor system) listing counts; each area that got rows bumped once
-- [ ] T025 [US3] app/Console/Commands/InstallDefaults.php (`vfilter:install-defaults`) using ConfigStore/SettingsRepository; call it from database/seeders/DatabaseSeeder.php
-- [ ] T026 [US3] Make T024 pass; phpstan; pint
+- [X] T024 [US3] tests/Feature/Console/InstallDefaultsTest.php: empty DB → Gateway/Download/Agent1 disabled with vSRO default ports, 17 cooldowns at 0, 6 counter rows, core settings with defaults; second run adds 0 rows and keeps changed values; one `config.defaults_installed` audit entry (actor system) listing counts; each area that got rows bumped once
+- [X] T025 [US3] app/Console/Commands/InstallDefaults.php (`vfilter:install-defaults`) using ConfigStore/SettingsRepository; call it from database/seeders/DatabaseSeeder.php
+- [X] T026 [US3] Make T024 pass; phpstan; pint
 
 ---
 
 ## Phase 6: Polish
 
-- [ ] T027 [P] Update CLAUDE.md (write path rule: only ConfigStore/SettingsRepository write config; `vfilter:install-defaults`) and HANDOFF.md status
-- [ ] T028 Run quickstart "Tests only"; full suite, phpstan, pint green
+- [X] T027 [P] Update CLAUDE.md (write path rule: only ConfigStore/SettingsRepository write config; `vfilter:install-defaults`) and HANDOFF.md status
+- [X] T028 Run quickstart "Tests only"; full suite, phpstan, pint green
 - [ ] T029 Run quickstart SQL Server section when a server is available
 
 ## Dependencies
