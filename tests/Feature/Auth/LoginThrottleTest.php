@@ -44,3 +44,4 @@ it('does not lock other emails from the same ip because of one email', function 
 
     expect(Auth::check())->toBeTrue();
 });
+

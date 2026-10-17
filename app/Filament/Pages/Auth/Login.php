@@ -17,7 +17,8 @@ class Login extends BaseLogin
 {
     public function authenticate(): ?LoginResponse
     {
-        $isChallengeStep = filled($this->userUndertakingMultiFactorAuthentication);
+        // Only a valid, decrypted challenge counts as the second step.
+        $isChallengeStep = $this->getUserUndertakingMultiFactorAuthentication() !== null;
         $email = mb_strtolower(trim((string) ($this->data['email'] ?? '')));
         $throttleKey = 'login:'.$email.'|'.request()->ip();
 
