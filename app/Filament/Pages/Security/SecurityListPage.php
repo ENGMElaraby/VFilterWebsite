@@ -80,7 +80,9 @@ abstract class SecurityListPage extends Page
                 ->label(__('panel.lists.save'))
                 ->icon(Heroicon::OutlinedCheck)
                 ->visible(fn (): bool => static::canEdit())
-                ->requiresConfirmation(fn (): bool => $this->removesOwnIp())
+                ->requiresConfirmation()
+                // A description alone opens the modal, so hide it unless the save would lock the admin out.
+                ->modalHidden(fn (): bool => ! $this->removesOwnIp())
                 ->modalDescription(fn (): string => __('panel.lists.own_ip_warning', ['ip' => request()->ip()]))
                 ->action(fn () => $this->save()),
             Action::make('reload')

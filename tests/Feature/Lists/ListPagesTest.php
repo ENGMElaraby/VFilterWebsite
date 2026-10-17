@@ -42,7 +42,9 @@ it('saves valid text and reports the counts', function () {
 
     Livewire::test(BlockedIps::class)
         ->fillForm(['text' => "1.2.3.4\n10.0.0.9/24\n1.2.3.4"])
-        ->callAction('save')
+        // No confirmation outside Allowed GM IPs: mounting saves at once.
+        ->mountAction('save')
+        ->assertActionNotMounted('save')
         ->assertHasNoErrors()
         ->assertNotified(__('panel.lists.saved', ['added' => 2, 'removed' => 0, 'updated' => 0]))
         ->assertSet('data.text', "1.2.3.4\n10.0.0.0/24");
