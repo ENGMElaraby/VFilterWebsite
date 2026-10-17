@@ -9,13 +9,17 @@ Admins use it to configure the filter, control it (start/stop, gateway mode), an
 - `docs/maxiguard-feature-map.md`: every MaxiGuard panel feature we're matching.
 - `.specify/memory/constitution.md`: project rules. They override everything else here.
 
-## Reference: AegisCore-SRO
+## References: AegisCore-SRO, go-sro
 https://github.com/ENGMElaraby/AegisCore-SRO is our open-source Go server for vSRO 1.188. Check it
 for anything about game data or game systems behind a panel page: regions, items, skills, jobs,
 party, pets, alchemy, PK, and so on (`_docs/sr-gameserver-*.md`, `_docs/vsro188-*.md`, `db/`), and
 for opcode names shown in the logs viewer (`protocol/vsro188/`, `protocol/registry/`). Reference only;
 no dependency on it. Its `db/` is its own MySQL schema, not `SRO_VT_SHARD`, so check table names
 against our real DB.
+
+Secondary: https://github.com/ENGMElaraby/go-sro, our fork of `ferdoran/go-sro`, the older Go server
+AegisCore grew from (last updated 2024-10). Use it only when AegisCore lacks something. If the two
+disagree, AegisCore wins.
 
 ## Workflow: Spec-Driven Development (GitHub Spec Kit)
 Every feature goes through the spec-kit skills in `.claude/skills/`:
