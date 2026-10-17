@@ -6,6 +6,7 @@ use App\Filter\Exceptions\CommandInProgressException;
 use App\Models\Filter\FilterCommand;
 use App\Models\Filter\FilterModule;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
     seedFilterModules(agents: 3);
@@ -45,4 +46,24 @@ it('fails when every agent is busy', function () {
     expect(fn () => app(CommandQueue::class)->queueForAllAgents(CommandName::Restart))
         ->toThrow(CommandInProgressException::class);
     expect(FilterCommand::count())->toBe(3);
+});
+
+it('refuses when no agent is enabled', function () {
+    FilterModule::query()->where('type', 'agent')->update(['enabled' => false]);
+
+    expect(fn () => app(CommandQueue::class)->queueForAllAgents(CommandName::Restart))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+it('skips an agent whose lock another request holds', function () {
+    $lock = Cache::lock('filter-command:agent2', 10);
+    $lock->get();
+
+    try {
+        $result = app(CommandQueue::class)->queueForAllAgents(CommandName::Restart);
+    } finally {
+        $lock->release();
+    }
+
+    expect($result->skipped)->toBe(['Agent2'])->and(FilterCommand::query()->pluck('target')->all())->toBe(['agent1', 'agent3']);
 });

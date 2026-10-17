@@ -5,6 +5,8 @@ namespace App\Models\Filter;
 use App\Enums\Filter\CommandName;
 use App\Enums\Filter\CommandStatus;
 use Database\Factories\Filter\FilterCommandFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -32,6 +34,19 @@ class FilterCommand extends Model
     protected $table = 'filter_commands';
 
     protected $guarded = ['id'];
+
+    /**
+     * Only rows whose command and status are contract values: an unexpected value written by the
+     * filter would otherwise break the enum casts for every reader.
+     *
+     * @param  Builder<FilterCommand>  $query
+     */
+    #[Scope]
+    protected function knownValues(Builder $query): void
+    {
+        $query->whereIn('command', array_column(CommandName::cases(), 'value'))
+            ->whereIn('status', array_column(CommandStatus::cases(), 'value'));
+    }
 
     /**
      * @return array<string, string>

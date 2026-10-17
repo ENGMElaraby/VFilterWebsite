@@ -42,7 +42,7 @@ class RecentCommandsWidget extends TableWidget
 
         return $table
             ->heading(__('panel.commands.recent'))
-            ->query(FilterCommand::query()->latest('id')->limit(FilterOverview::RECENT_COMMANDS))
+            ->query(FilterCommand::query()->knownValues()->latest('id')->limit(FilterOverview::RECENT_COMMANDS))
             ->paginated(false)
             ->poll('5s')
             ->columns([
@@ -87,7 +87,7 @@ class RecentCommandsWidget extends TableWidget
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalDescription(__('panel.commands.cancel_confirm'))
-                    ->visible(fn (FilterCommand $record): bool => Gate::allows('cancel', $record))
+                    ->visible(fn (FilterCommand $record): bool => $record->status === CommandStatus::Pending && Gate::allows('cancel', $record))
                     ->action(function (FilterCommand $record): void {
                         try {
                             app(CommandQueue::class)->cancel($record);

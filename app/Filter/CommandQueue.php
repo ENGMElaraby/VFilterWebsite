@@ -15,6 +15,7 @@ use App\Models\Filter\FilterModule;
 use App\Models\Filter\FilterStatus;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Auth;
@@ -65,20 +66,46 @@ class CommandQueue
             ->pluck('name')
             ->all();
 
-        $result = $this->audit->transaction(function () use ($agents, $command): AllAgentsResult {
-            $queued = [];
-            $skipped = [];
+        if ($agents === []) {
+            throw new InvalidArgumentException('No enabled agents.');
+        }
 
-            foreach ($agents as $name) {
-                try {
-                    $queued[] = $this->locked(strtolower($name), fn (): FilterCommand => $this->insert($command, strtolower($name)));
-                } catch (CommandInProgressException) {
-                    $skipped[] = $name;
-                }
+        // Same order as queue(): hold the per-target locks until the transaction has committed.
+        $locks = [];
+        $skipped = [];
+
+        foreach ($agents as $name) {
+            $lock = Cache::lock('filter-command:'.strtolower($name), self::LOCK_SECONDS);
+
+            try {
+                $lock->block(self::LOCK_WAIT_SECONDS);
+                $locks[$name] = $lock;
+            } catch (LockTimeoutException) {
+                $skipped[] = $name;
             }
+        }
 
-            return new AllAgentsResult($queued, $skipped);
-        });
+        try {
+            $result = $this->audit->transaction(function () use ($locks, $command, $skipped): AllAgentsResult {
+                $queued = [];
+
+                foreach (array_keys($locks) as $name) {
+                    try {
+                        $queued[] = $this->insert($command, strtolower($name));
+                    } catch (CommandInProgressException) {
+                        $skipped[] = $name;
+                    }
+                }
+
+                sort($skipped);
+
+                return new AllAgentsResult($queued, $skipped);
+            });
+        } finally {
+            foreach ($locks as $lock) {
+                $lock->release();
+            }
+        }
 
         if ($result->queued === []) {
             throw new CommandInProgressException(__('panel.commands.targets.all_agents'), CommandGroup::Power);
@@ -93,7 +120,7 @@ class CommandQueue
         $this->assertTarget(self::GATEWAY);
 
         return $this->locked(self::GATEWAY, fn (): FilterCommand => $this->audit->transaction(function () use ($mode): FilterCommand {
-            if ($this->reportedGatewayMode() === $mode && ! $this->inProgress(CommandGroup::GatewayMode, self::GATEWAY)) {
+            if ($this->onlineGatewayMode() === $mode && ! $this->inProgress(CommandGroup::GatewayMode, self::GATEWAY)) {
                 throw new GatewayModeUnchangedException($mode);
             }
 
@@ -103,7 +130,7 @@ class CommandQueue
 
     public function cancel(FilterCommand $command): FilterCommand
     {
-        Gate::authorize('create', FilterCommand::class);
+        Gate::authorize('cancel', $command);
 
         return $this->audit->transaction(function () use ($command): FilterCommand {
             $changed = FilterCommand::query()
@@ -197,11 +224,17 @@ class CommandQueue
         }
     }
 
-    private function reportedGatewayMode(): ?GatewayMode
+    /**
+     * The mode the gateway reports, or null while it is offline (a stale mode must not block a change).
+     */
+    private function onlineGatewayMode(): ?GatewayMode
     {
-        $mode = FilterStatus::query()->whereRaw('LOWER(module) = ?', [self::GATEWAY])->toBase()->value('gateway_mode');
+        $status = FilterStatus::query()->whereRaw('LOWER(module) = ?', [self::GATEWAY])->toBase()->first(['gateway_mode', 'heartbeat_at']);
+        $heartbeat = $status?->heartbeat_at === null ? null : CarbonImmutable::parse((string) $status->heartbeat_at, 'UTC');
 
-        return GatewayMode::tryFrom((string) $mode);
+        return FilterOverview::isFresh($heartbeat, $this->clock->now())
+            ? GatewayMode::tryFrom((string) $status?->gateway_mode)
+            : null;
     }
 
     private function actor(): User

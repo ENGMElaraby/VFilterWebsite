@@ -80,7 +80,7 @@ class FilterOverview
         return $this->guard(function () use ($cards, $limit): array {
             $now = $this->clock->now();
             $online = collect($cards)->filter(fn (ModuleCard $card): bool => $card->online)->pluck('target')->all();
-            $commands = FilterCommand::query()->latest('id')->limit($limit)->get();
+            $commands = FilterCommand::query()->knownValues()->latest('id')->limit($limit)->get();
             $names = User::query()->whereIn('id', $commands->pluck('created_by')->unique())->pluck('name', 'id');
 
             return $commands
@@ -91,7 +91,15 @@ class FilterOverview
 
     public static function isFresh(?CarbonImmutable $heartbeat, CarbonImmutable $now): bool
     {
-        return $heartbeat !== null && $heartbeat->diffInMilliseconds($now, false) < self::ONLINE_WINDOW_SECONDS * 1000;
+        if ($heartbeat === null) {
+            return false;
+        }
+
+        $age = $heartbeat->diffInMilliseconds($now, false);
+        $window = self::ONLINE_WINDOW_SECONDS * 1000;
+
+        // A heartbeat far in the future means a wrong filter clock, not a live module.
+        return $age < $window && $age > -$window;
     }
 
     private function card(FilterModule $module, ?object $status, CarbonImmutable $now, ?GatewayMode $pendingMode): ModuleCard

@@ -210,6 +210,7 @@ return [
     'health' => [
         'title' => 'Connection health',
         'run' => 'Run check',
+        'too_many' => 'Too many checks. Try again in :seconds seconds.',
         'not_run' => 'Run the check to test each database connection. Nothing is changed.',
         'connection' => 'Database',
         'state' => 'State',

@@ -27,9 +27,10 @@ it('lets admins and the owner control the filter and nobody else', function (str
     'viewer' => ['viewer', false],
 ]);
 
-it('does not allow cancelling a command that is no longer pending', function () {
+it('leaves the pending check to the command queue', function () {
     $admin = User::factory()->admin()->create();
     $running = FilterCommand::factory()->create(['status' => CommandStatus::Running]);
 
-    expect(Gate::forUser($admin)->allows('cancel', $running))->toBeFalse();
+    // CommandQueue::cancel() refuses it with CommandAlreadyStartedException (CancelCommandTest).
+    expect(Gate::forUser($admin)->allows('cancel', $running))->toBeTrue();
 });

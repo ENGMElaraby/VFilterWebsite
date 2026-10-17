@@ -4,6 +4,7 @@ use App\Enums\Filter\GatewayMode;
 use App\Enums\Filter\ModuleState;
 use App\Filter\FilterOverview;
 use App\Filter\ModuleCard;
+use App\Models\Filter\FilterCommand;
 use App\Models\Filter\FilterModule;
 use App\Models\Filter\FilterStatus;
 use Illuminate\Support\Carbon;
@@ -38,6 +39,8 @@ it('is online only while the heartbeat is under 15 seconds old', function (int $
     '14 s' => [14, true],
     '15 s' => [15, false],
     'stale' => [600, false],
+    'clock 14 s ahead' => [-14, true],
+    'clock an hour ahead' => [-3600, false],
 ]);
 
 it('shows a module that never reported as offline', function () {
@@ -107,4 +110,13 @@ it('has no player count when no agent is online', function () {
     reportStatus('Gateway');
 
     expect(app(FilterOverview::class)->onlinePlayers())->toBeNull();
+});
+
+it('skips commands with values outside the contract instead of failing', function () {
+    FilterCommand::factory()->create();
+    FilterCommand::query()->toBase()->insert([
+        'command' => 'teleport', 'target' => 'agent1', 'status' => 'weird', 'created_by' => 1, 'created_at' => now('UTC'),
+    ]);
+
+    expect(app(FilterOverview::class)->recentCommands())->toHaveCount(1);
 });
