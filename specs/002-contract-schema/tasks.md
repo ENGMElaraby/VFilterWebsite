@@ -32,11 +32,11 @@ description: "Tasks for 002 Shared Contract Schema and Settings Repository"
 
 **Independent Test**: structure test passes; migrate is repeatable; rollback removes only contract tables.
 
-- [ ] T007 [US1] tests/Feature/Contract/SchemaTest.php: for each of the 11 tables assert column names, nullability, PK and index columns per data-model.md (via `Schema::getColumns`/`getIndexes`); rollback of 002 migrations drops only `filter_*` tables; `migrate` twice is a no-op
-- [ ] T008 [P] [US1] tests/Feature/Contract/SqlServerTypesTest.php `@group sqlsrv` (skipped elsewhere): `nvarchar` lengths, `datetime2`, `bit`, `bigint`, `int` per data-model.md
-- [ ] T009 [P] [US1] tests/Feature/Contract/ModelsTest.php: enum casts and JSON casts round-trip for each model; string-keyed models save and find by key
-- [ ] T010 [US1] Make T007–T009 pass (fix migrations/models)
-- [ ] T011 [US1] Apply contracts/shared-contract-0.2.0.md to docs/shared-contract.md in **both** repos (identical file, version 0.2.0, changelog entry); update rule 4 wording
+- [X] T007 [US1] tests/Feature/Contract/SchemaTest.php: for each of the 11 tables assert column names, nullability, PK and index columns per data-model.md (via `Schema::getColumns`/`getIndexes`); rollback of 002 migrations drops only `filter_*` tables; `migrate` twice is a no-op
+- [X] T008 [P] [US1] tests/Feature/Contract/SqlServerTypesTest.php `@group sqlsrv` (skipped elsewhere): `nvarchar` lengths, `datetime2`, `bit`, `bigint`, `int` per data-model.md
+- [X] T009 [P] [US1] tests/Feature/Contract/ModelsTest.php: enum casts and JSON casts round-trip for each model; string-keyed models save and find by key
+- [X] T010 [US1] Make T007–T009 pass (fix migrations/models)
+- [X] T011 [US1] Apply contracts/shared-contract-0.2.0.md to docs/shared-contract.md in **both** repos (identical file, version 0.2.0, changelog entry); update rule 4 wording
 
 ---
 
