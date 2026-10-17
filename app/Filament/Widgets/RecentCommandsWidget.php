@@ -15,13 +15,19 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 
 /**
  * The 20 newest commands with live status and Cancel while pending (spec 003, FR-012, FR-014a).
  */
 class RecentCommandsWidget extends TableWidget
 {
+    public const REFRESH_EVENT = 'filter-command-queued';
+
     protected static bool $isDiscovered = false;
+
+    // The dashboard's main content: render with the page instead of a second request (SC-001).
+    protected static bool $isLazy = false;
 
     protected static ?int $sort = 3;
 
@@ -48,7 +54,7 @@ class RecentCommandsWidget extends TableWidget
                     ->formatStateUsing(fn (string $state): string => $state === CommandQueue::ALL ? __('panel.commands.targets.all') : ucfirst($state)),
                 TextColumn::make('created_by')
                     ->label(__('panel.commands.fields.requested_by'))
-                    ->formatStateUsing(fn (FilterCommand $record): string => $this->row($record)?->requestedBy ?? '#'.$record->created_by),
+                    ->formatStateUsing(fn (FilterCommand $record): string => $this->row($record)->requestedBy ?? '#'.$record->created_by),
                 TextColumn::make('created_at')
                     ->label(__('panel.commands.fields.requested_at'))
                     ->dateTime('Y-m-d H:i:s', timezone: $zone),
@@ -91,6 +97,15 @@ class RecentCommandsWidget extends TableWidget
                         }
                     }),
             ]);
+    }
+
+    /**
+     * Show a command queued from the module cards at once instead of on the next poll.
+     */
+    #[On(self::REFRESH_EVENT)]
+    public function refreshCommands(): void
+    {
+        $this->rows = null;
     }
 
     private function commandLabel(FilterCommand $record): string

@@ -12,6 +12,11 @@ use Filament\Pages\Dashboard as BaseDashboard;
  */
 class Dashboard extends BaseDashboard
 {
+    public static function getNavigationGroup(): string
+    {
+        return __('panel.navigation.dashboard');
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('panel.dashboard.title');

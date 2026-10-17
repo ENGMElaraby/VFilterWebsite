@@ -15,6 +15,9 @@ class OnlinePlayersWidget extends StatsOverviewWidget
 {
     protected static bool $isDiscovered = false;
 
+    // The dashboard's main content: render with the page instead of a second request (SC-001).
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 1;
 
     protected ?string $pollingInterval = '5s';

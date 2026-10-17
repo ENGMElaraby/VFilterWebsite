@@ -39,6 +39,9 @@ class ModuleStatusWidget extends Widget implements HasActions, HasSchemas
 
     protected static bool $isDiscovered = false;
 
+    // The dashboard's main content: render with the page instead of a second request (SC-001).
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';
@@ -149,6 +152,7 @@ class ModuleStatusWidget extends Widget implements HasActions, HasSchemas
     {
         try {
             Notification::make()->success()->title($command())->send();
+            $this->dispatch(RecentCommandsWidget::REFRESH_EVENT);
         } catch (CommandInProgressException|GatewayModeUnchangedException|FilterDatabaseUnavailableException $exception) {
             Notification::make()->danger()->title($exception->getMessage())->send();
         } catch (InvalidArgumentException) {
@@ -156,9 +160,37 @@ class ModuleStatusWidget extends Widget implements HasActions, HasSchemas
         }
     }
 
+    /**
+     * Actions with these arguments that the user may see. Rendering an action does not check
+     * its visibility, so the view only echoes what this returns.
+     *
+     * @param  list<string>  $names
+     * @param  array<string, string>  $arguments
+     * @return list<Action>
+     */
+    public function visibleActions(array $names, array $arguments): array
+    {
+        $actions = [];
+
+        foreach ($names as $name) {
+            $action = $this->getAction($name);
+
+            if ($action instanceof Action && ($action = $action($arguments))->isVisible()) {
+                $actions[] = $action;
+            }
+        }
+
+        return $actions;
+    }
+
+    public function canQueue(): bool
+    {
+        return Gate::allows('create', FilterCommand::class);
+    }
+
     private function canControl(string $target): bool
     {
-        if (! Gate::allows('create', FilterCommand::class)) {
+        if (! $this->canQueue()) {
             return false;
         }
 

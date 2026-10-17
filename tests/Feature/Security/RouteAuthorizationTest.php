@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AuditLog;
+use App\Models\Filter\FilterModule;
 use App\Models\User;
 use Illuminate\Routing\Route as RouteDefinition;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Route;
  */
 const PANEL_ACCESS = [
     'filament.admin.pages.dashboard' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.pages.connection-health' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.resources.filter-modules.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.resources.filter-modules.edit' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.auth.profile' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.audit-logs.index' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.audit-logs.view' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
@@ -53,6 +57,7 @@ it('has an access rule for every panel page', function () {
 it('enforces the access rules', function (string $visitor) {
     $owner = User::factory()->owner()->withTwoFactor()->create();
     $staff = User::factory()->viewer()->withTwoFactor()->create();
+    $module = FilterModule::factory()->create();
     $entry = AuditLog::query()->create(['created_at' => now(), 'actor_type' => 'system', 'action' => 'user.created']);
 
     if ($visitor !== 'guest') {
@@ -69,6 +74,7 @@ it('enforces the access rules', function (string $visitor) {
         $parameters = match ($name) {
             'filament.admin.resources.audit-logs.view' => ['record' => $entry->id],
             'filament.admin.resources.users.edit' => ['record' => $staff->id],
+            'filament.admin.resources.filter-modules.edit' => ['record' => $module->id],
             default => [],
         };
 

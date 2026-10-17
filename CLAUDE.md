@@ -69,8 +69,15 @@ php artisan test          # Pest
   what changed, audit each change and bump that area's row in `filter_config_version`, in one
   transaction. Never write `filter_*` config tables directly. Filter-owned tables (`filter_status`,
   `filter_sessions`, `filter_logs`) are read-only for the website.
-- Filter control goes only through `filter_commands`. The website never opens a socket to the filter.
-- Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old.
+- Filter control goes only through `filter_commands`, written only by `App\Filter\CommandQueue` (authorises,
+  blocks duplicates per target, audits `command.queued`/`command.cancelled`). The website never opens a socket
+  to the filter. It may change a command's status only `pending → cancelled` (contract 0.3.0).
+- Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old, measured with
+  `App\Filter\DatabaseClock` (the DB server's clock). Read status through `App\Filter\FilterOverview`.
+- Game DB connections `account`/`shard`/`log` are configured only when `DB_ACCOUNT_DATABASE` /
+  `DB_SHARD_DATABASE` / `DB_LOG_DATABASE` is set (host/credentials default to `DB_*`, override with `DB_GAME_*`).
+- Filament renders an action even when it is hidden: in custom views echo only actions that pass `isVisible()`
+  (see `ModuleStatusWidget::visibleActions()`).
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.
 - Roles: `owner` > `admin` > `viewer`. Every route and Filament page has a policy.
 - Times are stored in UTC and shown in `APP_DISPLAY_TIMEZONE` (`config('vfilter.display_timezone')`).

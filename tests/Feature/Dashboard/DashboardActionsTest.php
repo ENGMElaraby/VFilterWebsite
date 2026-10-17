@@ -33,7 +33,8 @@ it('restarts a module after confirmation', function () {
         ->mountAction(moduleAction('restart', ['target' => 'agent1']))
         ->assertMountedActionModalSee(__('panel.commands.confirm_restart', ['target' => 'Agent1']))
         ->callMountedAction()
-        ->assertNotified();
+        ->assertNotified()
+        ->assertDispatched(RecentCommandsWidget::REFRESH_EVENT);
 
     expect(FilterCommand::query()->sole())
         ->command->toBe(CommandName::Restart)
@@ -96,7 +97,8 @@ it('gives viewers no controls', function () {
     Livewire::test(ModuleStatusWidget::class)
         ->assertActionHidden(moduleAction('restart', ['target' => 'agent1']))
         ->assertActionHidden(moduleAction('start', ['target' => 'all']))
-        ->assertActionHidden(moduleAction('gatewayMode', ['mode' => 'public']));
+        ->assertActionHidden(moduleAction('gatewayMode', ['mode' => 'public']))
+        ->assertDontSeeHtml('mountAction(');
     // A crafted call is refused server-side too: CommandQueueTest "refuses viewers".
 });
 
@@ -106,7 +108,9 @@ it('hides controls on disabled modules', function () {
 
     Livewire::test(ModuleStatusWidget::class)
         ->assertActionHidden(moduleAction('restart', ['target' => 'agent2']))
-        ->assertActionVisible(moduleAction('restart', ['target' => 'agent1']));
+        ->assertActionVisible(moduleAction('restart', ['target' => 'agent1']))
+        ->assertSeeHtml('\\u0022agent1\\u0022')
+        ->assertDontSeeHtml('\\u0022agent2\\u0022');
 });
 
 it('cancels pending commands from the list, for admins only', function () {

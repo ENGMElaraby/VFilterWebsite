@@ -20,13 +20,13 @@
             <x-filament::section :heading="__('panel.dashboard.modules')">
                 <x-slot name="afterHeader">
                     <div style="display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;">
-                        @foreach ([ModuleStatusWidget::ALL_AGENTS, CommandQueue::ALL] as $group)
+                        @foreach ($this->canQueue() ? [ModuleStatusWidget::ALL_AGENTS, CommandQueue::ALL] : [] as $group)
                             <span style="font-size: .875rem; opacity: .75;">
                                 {{ $group === CommandQueue::ALL ? __('panel.dashboard.all') : __('panel.dashboard.all_agents') }}:
                             </span>
-                            {{ ($this->startAction)(['target' => $group]) }}
-                            {{ ($this->stopAction)(['target' => $group]) }}
-                            {{ ($this->restartAction)(['target' => $group]) }}
+                            @foreach ($this->visibleActions(['start', 'stop', 'restart'], ['target' => $group]) as $action)
+                                {{ $action }}
+                            @endforeach
                         @endforeach
                     </div>
                 </x-slot>
@@ -59,7 +59,7 @@
                                     @endif
                                     @if ($card->uptimeSeconds !== null)
                                         <dt>{{ __('panel.module_card.uptime') }}</dt>
-                                        <dd>{{ CarbonInterval::seconds($card->uptimeSeconds)->cascade()->forHumans(['short' => true, 'parts' => 2]) }}</dd>
+                                        <dd>{{ CarbonInterval::seconds($card->uptimeSeconds)->cascade()->locale(app()->getLocale())->forHumans(['short' => true, 'parts' => 2]) }}</dd>
                                     @endif
                                 @else
                                     <dt>{{ __('panel.module_card.last_heartbeat') }}</dt>
@@ -91,15 +91,17 @@
                             </dl>
 
                             <div style="display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem;">
-                                {{ ($this->startAction)(['target' => $card->target]) }}
-                                {{ ($this->stopAction)(['target' => $card->target]) }}
-                                {{ ($this->restartAction)(['target' => $card->target]) }}
+                                @foreach ($this->visibleActions(['start', 'stop', 'restart'], ['target' => $card->target]) as $action)
+                                    {{ $action }}
+                                @endforeach
                             </div>
 
                             @if ($card->isGateway())
                                 <div style="display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem;">
                                     @foreach (GatewayMode::cases() as $mode)
-                                        {{ ($this->gatewayModeAction)(['mode' => $mode->value]) }}
+                                        @foreach ($this->visibleActions(['gatewayMode'], ['mode' => $mode->value]) as $action)
+                                            {{ $action }}
+                                        @endforeach
                                     @endforeach
                                 </div>
                             @endif
