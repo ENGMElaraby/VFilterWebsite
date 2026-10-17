@@ -29,6 +29,8 @@ it('records the signed-in user as actor with ip and utc time', function () {
 it('records console and system actors', function () {
     $logger = app(AuditLogger::class);
 
+    expect($logger->asConsole()->log('user.created')->ip)->toBeNull();
+
     expect($logger->asConsole()->log('user.created')->actor_type)->toBe('console')
         ->and($logger->asSystem()->log('user.created')->actor_type)->toBe('system')
         ->and($logger->log('user.created')->actor_type)->toBe('system');

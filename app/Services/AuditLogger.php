@@ -57,7 +57,7 @@ class AuditLogger
             'actor_type' => $resolvedType,
             'actor_id' => $isUserActor ? $user->getKey() : null,
             'actor_label' => $actorLabel ?? ($isUserActor ? $user->email : null),
-            'ip' => request()->ip(),
+            'ip' => $resolvedType === 'console' ? null : request()->ip(),
             'action' => $action,
             'target_type' => $target === null ? null : Str::snake(class_basename($target)),
             'target_id' => $target === null ? null : (string) $target->getKey(),
