@@ -22,6 +22,7 @@ database (`docs/shared-contract.md`), which the filter picks up.
 
 - Q: Can an admin cancel a command that is still pending? → A: Yes. The panel may change a command from pending to a new status `cancelled`, only while it is still pending. The filter never runs cancelled commands. Shared contract MINOR change (0.3.0) in both repos.
 - Q: How does MaxiGuard's "Agent" (all agents) button work here? → A: An "All agents" action queues one separate command per enabled agent (`agent1`, `agent2`, …), each with its own live status. No contract change.
+- Q: Who may run the risky actions (Stop/Restart All, gateway to Public, module address edits)? → A: Admin and owner, same as every other command; no owner-only actions. Each is confirmed and audited.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -234,7 +235,7 @@ the game database shows unreachable with a short reason, and no credentials appe
 
 ## Assumptions
 
-- Roles follow feature 001: viewer = read-only; admin and owner may queue commands and edit modules.
+- Roles follow feature 001: viewer = read-only; admin and owner may queue every command (including All and gateway Public), cancel pending commands and edit modules. There are no owner-only actions in this feature.
 - Command targets are `all` or a module's name in lower case (`gateway`, `download`, `agent1`…`agent5`); the contract lists `all`, `gateway`, `agent1`… and `download` is read as included. A PATCH note will be added to the shared contract in both repos if that wording needs to be explicit.
 - The filter applies commands in the order queued; the panel does not reorder or retry them.
 - Online players = sum of Agent online counts, since players are in game on Agents; the Gateway only holds logins briefly.
