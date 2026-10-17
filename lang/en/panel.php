@@ -56,4 +56,18 @@ return [
         'submit' => 'Change password',
         'done' => 'Password changed.',
     ],
+    'audit' => [
+        'singular' => 'Audit entry',
+        'plural' => 'Audit log',
+        'fields' => [
+            'time' => 'Time',
+            'actor' => 'Who',
+            'action' => 'Action',
+            'target' => 'Item',
+            'ip' => 'IP',
+            'changes' => 'Changes (old → new)',
+            'from' => 'From',
+            'until' => 'Until',
+        ],
+    ],
 ];

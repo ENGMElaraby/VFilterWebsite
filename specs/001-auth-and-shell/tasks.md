@@ -115,15 +115,15 @@ description: "Tasks for 001 Admin Panel Shell"
 
 ### Tests (write first, must fail)
 
-- [ ] T046 [P] [US3] tests/Feature/Audit/AuditLogPolicyTest.php: owner and admin can list/view; viewer 403 and no menu item; no create/edit/delete routes or actions for anyone
-- [ ] T047 [P] [US3] tests/Feature/Audit/AuditLogPageTest.php: newest first, paginated 25; filters actor, action, date range; old → new values rendered; action labels translated, unknown action shows raw id; times shown in `APP_DISPLAY_TIMEZONE`
+- [X] T046 [P] [US3] tests/Feature/Audit/AuditLogPolicyTest.php: owner and admin can list/view; viewer 403 and no menu item; no create/edit/delete routes or actions for anyone
+- [X] T047 [P] [US3] tests/Feature/Audit/AuditLogPageTest.php: newest first, paginated 25; filters actor, action, date range; old → new values rendered; action labels translated, unknown action shows raw id; times shown in `APP_DISPLAY_TIMEZONE`
 
 ### Implementation
 
-- [ ] T048 [US3] Create app/Policies/AuditLogPolicy.php (viewAny/view: `role->atLeast(admin)`; create/update/delete/restore/forceDelete: false) and register
-- [ ] T049 [US3] Create app/Filament/Resources/AuditLogs/AuditLogResource.php (+ Pages List/View, Tables/AuditLogsTable.php, Schemas/AuditLogInfolist.php) in group Administration: columns time, actor (label + type badge), action (translated), target, IP; filters SelectFilter actor, SelectFilter action, date range (created_at from/until); default sort `created_at desc`; view page shows old/new values as key → old → new list; no create/edit/delete
-- [ ] T050 [US3] Fill lang/en/audit.php and lang/ar/audit.php with labels for every action in contracts/audit-actions.md
-- [ ] T051 [US3] Make T046–T047 pass; phpstan; pint
+- [X] T048 [US3] Create app/Policies/AuditLogPolicy.php (viewAny/view: `role->atLeast(admin)`; create/update/delete/restore/forceDelete: false) and register
+- [X] T049 [US3] Create app/Filament/Resources/AuditLogs/AuditLogResource.php (+ Pages List/View, Tables/AuditLogsTable.php, Schemas/AuditLogInfolist.php) in group Administration: columns time, actor (label + type badge), action (translated), target, IP; filters SelectFilter actor, SelectFilter action, date range (created_at from/until); default sort `created_at desc`; view page shows old/new values as key → old → new list; no create/edit/delete
+- [X] T050 [US3] Fill lang/en/audit.php and lang/ar/audit.php with labels for every action in contracts/audit-actions.md
+- [X] T051 [US3] Make T046–T047 pass; phpstan; pint
 
 ---
 
