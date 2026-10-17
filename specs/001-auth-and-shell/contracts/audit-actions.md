@@ -12,8 +12,8 @@ Later features add their own (`setting.updated`, `command.queued`, …) using th
 | `auth.logout` | user | user | – |
 | `auth.password_reset_requested` | guest | user if exists, else none | – |
 | `auth.password_reset` | user/guest | user | – |
-| `auth.recovery_code_used` | user | user | – |
-| `auth.two_factor_failed` | guest | user | – |
+| `auth.recovery_code_used` | guest (mid sign-in, actor_label = email) | user | – |
+| `auth.two_factor_failed` | guest (mid sign-in, actor_label = email) | user | – |
 | `auth.two_factor_enabled` | user | user | – |
 | `auth.recovery_codes_regenerated` | user | user | – |
 | `user.created` | user/console | user | – → {name, email, role} |

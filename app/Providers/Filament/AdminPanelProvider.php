@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Auth\MandatoryAppAuthentication;
+use App\Filament\Pages\Auth\Login;
+use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\RestrictToAllowedIps;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -29,7 +32,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName(fn (): string => __('panel.brand'))
-            ->login()
+            ->login(Login::class)
+            ->multiFactorAuthentication(
+                [MandatoryAppAuthentication::make()->recoverable()->recoveryCodeCount(8)],
+                isRequired: true,
+            )
+            ->profile()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -52,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->middleware([
                 RestrictToAllowedIps::class,
+                PreventBackHistory::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,

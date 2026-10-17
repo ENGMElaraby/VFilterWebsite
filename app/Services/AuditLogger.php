@@ -46,8 +46,9 @@ class AuditLogger
         array $new = [],
         ?string $actorType = null,
         ?string $actorLabel = null,
+        ?User $actor = null,
     ): AuditLog {
-        $user = Auth::user();
+        $user = $actor ?? Auth::user();
         $resolvedType = $actorType ?? $this->defaultActorType ?? ($user instanceof User ? 'user' : 'system');
         $isUserActor = $resolvedType === 'user' && $user instanceof User;
 
