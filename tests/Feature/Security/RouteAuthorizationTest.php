@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AuditLog;
+use App\Models\Filter\FilterLog;
 use App\Models\Filter\FilterModule;
 use App\Models\User;
 use Illuminate\Routing\Route as RouteDefinition;
@@ -16,6 +17,9 @@ const PANEL_ACCESS = [
     'filament.admin.pages.connection-health' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.filter-modules.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.filter-modules.edit' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.resources.filter-logs.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.resources.filter-logs.view' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.resources.filter-sessions.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.auth.profile' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.audit-logs.index' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.audit-logs.view' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
@@ -58,6 +62,7 @@ it('enforces the access rules', function (string $visitor) {
     $owner = User::factory()->owner()->withTwoFactor()->create();
     $staff = User::factory()->viewer()->withTwoFactor()->create();
     $module = FilterModule::factory()->create();
+    $log = FilterLog::factory()->create();
     $entry = AuditLog::query()->create(['created_at' => now(), 'actor_type' => 'system', 'action' => 'user.created']);
 
     if ($visitor !== 'guest') {
@@ -75,6 +80,7 @@ it('enforces the access rules', function (string $visitor) {
             'filament.admin.resources.audit-logs.view' => ['record' => $entry->id],
             'filament.admin.resources.users.edit' => ['record' => $staff->id],
             'filament.admin.resources.filter-modules.edit' => ['record' => $module->id],
+            'filament.admin.resources.filter-logs.view' => ['record' => $log->id],
             default => [],
         };
 

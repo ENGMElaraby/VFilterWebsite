@@ -12,6 +12,7 @@ use App\Filter\Exceptions\CommandInProgressException;
 use App\Filter\Exceptions\GatewayModeUnchangedException;
 use App\Models\Filter\FilterCommand;
 use App\Models\Filter\FilterModule;
+use App\Models\Filter\FilterSession;
 use App\Models\Filter\FilterStatus;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -37,6 +38,13 @@ class CommandQueue
     public const LOCK_WAIT_SECONDS = 3;
 
     private const GATEWAY = 'gateway';
+
+    /** Allowed ban lengths in minutes; null = permanent (contract 0.3.1). */
+    public const BAN_DURATIONS = [60, 1440, 10080, 43200];
+
+    public const REASON_MAX_LENGTH = 200;
+
+    private const TARGET_MAX_LENGTH = 64;
 
     public function __construct(
         private readonly AuditLogger $audit,
@@ -128,6 +136,45 @@ class CommandQueue
         }));
     }
 
+    /**
+     * Disconnect one session: target = character, else username, else IP (contract 0.3.1).
+     */
+    public function kick(FilterSession $session, ?string $reason = null): FilterCommand
+    {
+        Gate::authorize('create', FilterCommand::class);
+
+        $target = $session->charname ?: ($session->username ?: $session->ip);
+        $reason = $reason === null || trim($reason) === '' ? null : $this->assertReason($reason);
+
+        return $this->queuePlayer(CommandName::Kick, $target, [
+            'session_id' => $session->id,
+            'ip' => $session->ip,
+            'reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Ban the session's game account for a fixed time (null = permanent) and disconnect it.
+     */
+    public function ban(FilterSession $session, string $reason, ?int $durationMinutes): FilterCommand
+    {
+        Gate::authorize('create', FilterCommand::class);
+
+        if (blank($session->username)) {
+            throw new InvalidArgumentException('Only a logged-in account can be banned.');
+        }
+
+        if ($durationMinutes !== null && ! in_array($durationMinutes, self::BAN_DURATIONS, true)) {
+            throw new InvalidArgumentException("Ban duration {$durationMinutes} is not allowed.");
+        }
+
+        return $this->queuePlayer(CommandName::Ban, (string) $session->username, [
+            'session_id' => $session->id,
+            'reason' => $this->assertReason($reason),
+            'duration_minutes' => $durationMinutes,
+        ]);
+    }
+
     public function cancel(FilterCommand $command): FilterCommand
     {
         Gate::authorize('cancel', $command);
@@ -177,6 +224,31 @@ class CommandQueue
         $this->audit->log('command.queued', $row, [], ['command' => $command->value, 'target' => $target, 'payload' => $payload]);
 
         return $row;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function queuePlayer(CommandName $command, string $target, array $payload): FilterCommand
+    {
+        if ($target === '' || mb_strlen($target) > self::TARGET_MAX_LENGTH) {
+            throw new InvalidArgumentException('Player target must be 1-'.self::TARGET_MAX_LENGTH.' characters.');
+        }
+
+        return $this->locked($target, fn (): FilterCommand => $this->audit->transaction(
+            fn (): FilterCommand => $this->insert($command, $target, $payload),
+        ));
+    }
+
+    private function assertReason(string $reason): string
+    {
+        $reason = trim($reason);
+
+        if ($reason === '' || mb_strlen($reason) > self::REASON_MAX_LENGTH) {
+            throw new InvalidArgumentException('Reason must be 1-'.self::REASON_MAX_LENGTH.' characters.');
+        }
+
+        return $reason;
     }
 
     private function inProgress(CommandGroup $group, string $target): bool

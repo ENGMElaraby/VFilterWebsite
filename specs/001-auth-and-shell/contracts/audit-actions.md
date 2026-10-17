@@ -24,6 +24,8 @@ Later features add their own (`setting.updated`, `command.queued`, …) using th
 | `user.password_changed` | user | user (self) | – |
 | `command.queued` | user | filter_command | – → {command, target, payload} (003) |
 | `command.cancelled` | user | filter_command | {status: pending} → {status: cancelled} (003) |
+| `logs.exported` | user | – | – → {filters, rows, truncated} (004) |
+| `logs.pruned` | system | – | – → {cutoff, deleted, complete} (004) |
 
 ## Rules
 1. Never store: `password`, `remember_token`, `app_authentication_secret`,
