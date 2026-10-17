@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\EndUserSessions;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -47,10 +48,12 @@ class UsersTable
             ])
             ->recordActions([
                 EditAction::make()->hidden(fn (User $record): bool => $record->isOwner()),
-                self::disableAction(),
-                self::enableAction(),
-                self::resetPasswordAction(),
-                self::resetTwoFactorAction(),
+                ActionGroup::make([
+                    self::resetPasswordAction(),
+                    self::resetTwoFactorAction(),
+                    self::disableAction(),
+                    self::enableAction(),
+                ]),
             ]);
     }
 
