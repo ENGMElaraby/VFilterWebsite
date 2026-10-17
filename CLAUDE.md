@@ -79,6 +79,8 @@ php artisan test          # Pest
 - Log searches go through `App\Logs\LogQuery` with `LogFilters` (always time-bounded). Old logs are removed only
   by `vfilter:prune-logs` (`App\Logs\LogPruner`); retention is `logs.retention_days` via `App\Logs\LogRetention`.
 - Changing filter settings is the `manage-filter-settings` gate (admin, owner).
+- Security lists are written only through `App\Lists\ListEditor` (parse with `ListParser`, save the diff via
+  ConfigStore). Game Assistants via `App\Lists\GameAssistants`, cafe limits via `App\Lists\CafeLimits`.
 - Filament renders an action even when it is hidden: in custom views echo only actions that pass `isVisible()`
   (see `ModuleStatusWidget::visibleActions()`).
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.

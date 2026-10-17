@@ -29,6 +29,17 @@ class ListEditor
             ->implode("\n");
     }
 
+    /**
+     * @return list<array{value: string, comment: string|null}>
+     */
+    public function entries(ListName $list): array
+    {
+        return $this->rows($list)
+            ->map(fn (FilterListEntry $row): array => ['value' => $row->value, 'comment' => $row->comment])
+            ->values()
+            ->all();
+    }
+
     public function count(ListName $list): int
     {
         return FilterListEntry::query()->where('list', $list->value)->count();

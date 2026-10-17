@@ -14,6 +14,11 @@ class AllowedIps extends SecurityListPage
 
     protected static ?int $navigationSort = 1;
 
+    public static function usesRows(): bool
+    {
+        return true;
+    }
+
     public static function list(): ListName
     {
         return ListName::AllowedIps;

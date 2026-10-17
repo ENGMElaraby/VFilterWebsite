@@ -14,8 +14,6 @@ class ListParser
 
     public const COMMENT_MAX_LENGTH = 256;
 
-    private const COMMENT_MARKER = '//';
-
     private const USERNAME_PATTERN = '/^[A-Za-z0-9_-]+$/';
 
     public function parse(ListName $list, string $text): ParsedList

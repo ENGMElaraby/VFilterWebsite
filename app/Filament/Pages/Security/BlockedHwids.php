@@ -14,6 +14,11 @@ class BlockedHwids extends SecurityListPage
 
     protected static ?int $navigationSort = 6;
 
+    public static function usesRows(): bool
+    {
+        return true;
+    }
+
     public static function list(): ListName
     {
         return ListName::BlockedHwids;

@@ -9,7 +9,10 @@ use App\Lists\ListEditor;
 use App\Lists\ListName;
 use App\Lists\ListParser;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
@@ -27,12 +30,20 @@ abstract class SecurityListPage extends Page
 
     private const TEXTAREA_ROWS = 18;
 
-    /** @var array{text?: string} */
+    /** @var array{text?: mixed, rows?: mixed} */
     public array $data = [];
 
     public string $fingerprint = '';
 
     abstract public static function list(): ListName;
+
+    /**
+     * Short lists are edited as rows (value + comment, add/remove); long ones as pasted text.
+     */
+    public static function usesRows(): bool
+    {
+        return false;
+    }
 
     public static function getNavigationGroup(): string
     {
@@ -62,15 +73,47 @@ abstract class SecurityListPage extends Page
     public function form(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                Textarea::make('text')
-                    ->label(__('panel.lists.field'))
-                    ->helperText(__('panel.lists.live'))
-                    ->rows(self::TEXTAREA_ROWS)
-                    ->extraInputAttributes(['dir' => 'auto', 'spellcheck' => 'false', 'class' => 'font-mono'])
-                    ->disabled(fn (): bool => ! static::canEdit()),
-            ])
+            ->components([static::usesRows() ? $this->rowsField() : $this->textField()])
             ->statePath('data');
+    }
+
+    private function rowsField(): Repeater
+    {
+        return Repeater::make('rows')
+            ->hiddenLabel()
+            ->helperText(__('panel.lists.live'))
+            ->schema([
+                TextInput::make('value')
+                    ->label(__('panel.lists.value'))
+                    ->placeholder(__('panel.lists.placeholders.'.static::list()->format()->value))
+                    ->required()
+                    ->maxLength(static::list()->format()->maxLength())
+                    ->extraInputAttributes(['dir' => 'ltr', 'spellcheck' => 'false']),
+                TextInput::make('comment')
+                    ->label(__('panel.lists.comment'))
+                    ->maxLength(ListParser::COMMENT_MAX_LENGTH),
+            ])
+            ->table([
+                TableColumn::make(__('panel.lists.value'))->markAsRequired(),
+                TableColumn::make(__('panel.lists.comment')),
+            ])
+            ->compact()
+            ->defaultItems(0)
+            ->reorderable(false)
+            ->addActionLabel(__('panel.lists.add_row'))
+            ->addable(fn (): bool => static::canEdit())
+            ->deletable(fn (): bool => static::canEdit())
+            ->disabled(fn (): bool => ! static::canEdit());
+    }
+
+    private function textField(): Textarea
+    {
+        return Textarea::make('text')
+            ->label(__('panel.lists.field'))
+            ->helperText(__('panel.lists.live'))
+            ->rows(self::TEXTAREA_ROWS)
+            ->extraInputAttributes(['dir' => 'auto', 'spellcheck' => 'false', 'class' => 'font-mono'])
+            ->disabled(fn (): bool => ! static::canEdit());
     }
 
     protected function getHeaderActions(): array
@@ -96,16 +139,20 @@ abstract class SecurityListPage extends Page
     public function save(): void
     {
         $this->resetErrorBag();
-        $text = $this->data['text'] ?? '';
+        $text = $this->currentText();
 
-        if (! is_string($text)) {
+        if ($text === null) {
             return;
+        }
+
+        if (static::usesRows()) {
+            $this->form->validate();
         }
 
         try {
             $result = app(ListEditor::class)->save(static::list(), $text, $this->fingerprint);
         } catch (InvalidListException $exception) {
-            $this->addError('data.text', $exception->getMessage());
+            $this->showErrors($exception);
 
             return;
         } catch (ListChangedException $exception) {
@@ -138,7 +185,54 @@ abstract class SecurityListPage extends Page
     {
         $editor = app(ListEditor::class);
         $this->fingerprint = $editor->fingerprint(static::list());
-        $this->form->fill(['text' => $editor->text(static::list())]);
+        $this->form->fill(static::usesRows()
+            ? ['rows' => $editor->entries(static::list())]
+            : ['text' => $editor->text(static::list())]);
+    }
+
+    /**
+     * The form as "value // comment" lines; in row mode line N is row N. Null for a bad payload.
+     */
+    private function currentText(): ?string
+    {
+        if (! static::usesRows()) {
+            $text = $this->data['text'] ?? '';
+
+            return is_string($text) ? $text : null;
+        }
+
+        $rows = $this->data['rows'] ?? [];
+
+        if (! is_array($rows)) {
+            return null;
+        }
+
+        return implode("\n", array_map(function (mixed $row): string {
+            $value = is_array($row) && is_string($row['value'] ?? null) ? trim($row['value']) : '';
+            $comment = is_array($row) && is_string($row['comment'] ?? null) ? trim($row['comment']) : '';
+
+            // Keep one line per row (even empty) so parser line numbers point at rows.
+            return $comment === '' || $value === '' ? $value : $value.' // '.$comment;
+        }, array_values($rows)));
+    }
+
+    private function showErrors(InvalidListException $exception): void
+    {
+        if (! static::usesRows()) {
+            $this->addError('data.text', $exception->getMessage());
+
+            return;
+        }
+
+        $keys = array_keys(is_array($this->data['rows'] ?? null) ? $this->data['rows'] : []);
+
+        foreach ($exception->parsed->errors as $error) {
+            $key = $keys[$error['line'] - 1] ?? null;
+
+            $key === null
+                ? Notification::make()->danger()->title($error['reason'])->send()
+                : $this->addError("data.rows.{$key}.value", $error['reason']);
+        }
     }
 
     /**
@@ -158,8 +252,7 @@ abstract class SecurityListPage extends Page
             return false;
         }
 
-        $text = $this->data['text'] ?? '';
-        $after = app(ListParser::class)->parse(ListName::AllowedIps, is_string($text) ? $text : '');
+        $after = app(ListParser::class)->parse(ListName::AllowedIps, $this->currentText() ?? '');
 
         return ! collect($after->entries)->contains(fn (array $entry): bool => IpRange::contains($entry['value'], $ip));
     }

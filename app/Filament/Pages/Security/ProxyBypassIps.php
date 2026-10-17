@@ -14,6 +14,11 @@ class ProxyBypassIps extends SecurityListPage
 
     protected static ?int $navigationSort = 2;
 
+    public static function usesRows(): bool
+    {
+        return true;
+    }
+
     public static function list(): ListName
     {
         return ListName::ProxyBypassIps;
