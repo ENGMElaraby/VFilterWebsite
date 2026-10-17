@@ -46,21 +46,21 @@ description: "Tasks for 002 Shared Contract Schema and Settings Repository"
 
 ### Tests (first)
 
-- [ ] T012 [P] [US2] tests/Feature/Contract/ConfigVersionTest.php: bump increases only that area by 1; missing row is recreated at 1; two bumps → +2; `updated_at` set (UTC)
-- [ ] T013 [P] [US2] tests/Feature/Settings/SettingsRepositoryTest.php: typed get/all; set changes only differing keys; one `setting.updated` entry per key with typed old → new; `settings` counter +1 per call (not per key); no-op save writes nothing; unknown key and wrong type refused with all errors listed and nothing written; failure inside the transaction rolls back value, counter and audit; `updated_by` = actor; `define()` adds missing and never overwrites
-- [ ] T014 [P] [US2] tests/Feature/Contract/SettingTypeTest.php: cast/serialize/validate for bool, int, string (≤ 4000), json, color (`#RRGGBB`, `#RRGGBBAA`)
-- [ ] T015 [P] [US2] tests/Feature/Contract/ConfigStoreTest.php: create/update/delete per area audit `<area>.created|updated|deleted` with old/new and bump that area once; `batch()` touching two areas bumps each once; update with no change is a no-op; filter-owned models refused; exception inside `batch()` rolls back everything
-- [ ] T016 [P] [US2] tests/Feature/Contract/ModuleRulesTest.php: second gateway, missing download, sixth agent, `Agent3` without `Agent2`, port 0/70000, bad IP → refused and rolled back; valid set accepted
+- [X] T012 [P] [US2] tests/Feature/Contract/ConfigVersionTest.php: bump increases only that area by 1; missing row is recreated at 1; two bumps → +2; `updated_at` set (UTC)
+- [X] T013 [P] [US2] tests/Feature/Settings/SettingsRepositoryTest.php: typed get/all; set changes only differing keys; one `setting.updated` entry per key with typed old → new; `settings` counter +1 per call (not per key); no-op save writes nothing; unknown key and wrong type refused with all errors listed and nothing written; failure inside the transaction rolls back value, counter and audit; `updated_by` = actor; `define()` adds missing and never overwrites
+- [X] T014 [P] [US2] tests/Feature/Contract/SettingTypeTest.php: cast/serialize/validate for bool, int, string (≤ 4000), json, color (`#RRGGBB`, `#RRGGBBAA`)
+- [X] T015 [P] [US2] tests/Feature/Contract/ConfigStoreTest.php: create/update/delete per area audit `<area>.created|updated|deleted` with old/new and bump that area once; `batch()` touching two areas bumps each once; update with no change is a no-op; filter-owned models refused; exception inside `batch()` rolls back everything
+- [X] T016 [P] [US2] tests/Feature/Contract/ModuleRulesTest.php: second gateway, missing download, sixth agent, `Agent3` without `Agent2`, port 0/70000, bad IP → refused and rolled back; valid set accepted
 
 ### Implementation
 
-- [ ] T017 [US2] app/Config/ConfigVersion.php: `bump(ConfigArea $area)` atomic `UPDATE … SET version = version + 1` then insert if 0 rows; `current(): array<string,int>`
-- [ ] T018 [US2] app/Config/SettingValue.php (or methods on `SettingType`): `cast`, `serialize`, `validate` per research §6
-- [ ] T019 [US2] app/Settings/SettingsRepository.php per contracts/config-write-api.md; exceptions app/Settings/UnknownSettingException.php, app/Settings/InvalidSettingValueException.php
-- [ ] T020 [US2] app/Config/ConfigStore.php per contracts/config-write-api.md (areas from model `AREA`, bump once per touched area per transaction, audit via AuditLogger)
-- [ ] T021 [US2] app/Config/ModuleRules.php per research §7, called by ConfigStore for `modules`
-- [ ] T022 [US2] Add audit labels for the new actions to lang/en/audit.php and lang/ar/audit.php; add `setting` and area target types if shown
-- [ ] T023 [US2] Make T012–T016 pass; phpstan; pint
+- [X] T017 [US2] app/Config/ConfigVersion.php: `bump(ConfigArea $area)` atomic `UPDATE … SET version = version + 1` then insert if 0 rows; `current(): array<string,int>`
+- [X] T018 [US2] app/Config/SettingValue.php (or methods on `SettingType`): `cast`, `serialize`, `validate` per research §6
+- [X] T019 [US2] app/Settings/SettingsRepository.php per contracts/config-write-api.md; exceptions app/Settings/UnknownSettingException.php, app/Settings/InvalidSettingValueException.php
+- [X] T020 [US2] app/Config/ConfigStore.php per contracts/config-write-api.md (areas from model `AREA`, bump once per touched area per transaction, audit via AuditLogger)
+- [X] T021 [US2] app/Config/ModuleRules.php per research §7, called by ConfigStore for `modules`
+- [X] T022 [US2] Add audit labels for the new actions to lang/en/audit.php and lang/ar/audit.php; add `setting` and area target types if shown
+- [X] T023 [US2] Make T012–T016 pass; phpstan; pint
 
 ---
 

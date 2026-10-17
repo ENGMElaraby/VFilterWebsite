@@ -22,6 +22,10 @@ For `FilterModule`, `FilterListEntry`, `FilterAreaRule`, `FilterCooldown`, `Filt
 - Refuses filter-owned models (`FilterStatus`, `FilterSession`, `FilterLog`, `FilterCommand`).
 - `modules` writes run `ModuleRules::assertValid()` before commit.
 
+## Audit entries
+`target_type` is the snake-case model name (`filter_setting`, `filter_module`, …); `target_id` its key
+(setting key, cooldown action, username, or row id).
+
 ## Audit action ids added
 `setting.updated`, `modules.created|updated|deleted`, `lists.created|updated|deleted`,
 `area_rules.created|updated|deleted`, `cooldowns.created|updated|deleted`,
