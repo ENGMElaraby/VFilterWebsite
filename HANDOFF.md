@@ -3,7 +3,8 @@
 **Date:** 2026-10-17 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
 (PR #1 open). Feature **002-contract-schema is built** (branch `002-contract-schema`, from 001). Feature
 **003-dashboard-and-control is built** (branch `003-dashboard-and-control`, from 002). Feature **004-logs is built**
-(branch `004-logs`, from 003). **Phase 1 (001–004) is complete.** Next: `005-security-lists`.
+(branch `004-logs`, from 003). **Phase 1 (001–004) is complete.** Feature **005-security-lists is built** (branch `005-security-lists`, from 004).
+Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (see `../VFilter/HANDOFF.md`).
 
 ## What exists
 | Path | What |
@@ -11,12 +12,13 @@
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.1 draft (tables built in 002; `cancelled` command status in 003; kick/ban payloads in 004) |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.2 draft (tables in 002; `cancelled` status in 003; kick/ban payloads in 004; list formats + `cafe_limit` in 005) |
 | `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
 | `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
 | `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
 | `specs/003-dashboard-and-control/` | Dashboard, commands, Modules page, connection health (done) |
 | `specs/004-logs/` | Logs search/live/export, retention prune, sessions kick/ban (done) |
+| `specs/005-security-lists/` | Security lists, Game Assistants grid, net cafe limits (done) |
 | `app/`, `database/`, `lang/`, `tests/` | The Laravel app: sign-in + 2FA, users, audit log, EN/AR |
 | `docs/maxiguard-feature-map.md` | All 50 MaxiGuard panel pages we're matching |
 
@@ -36,6 +38,8 @@
   pending. Viewers are read-only and see real module addresses masked.
 - Logs (004): searches are always time-bounded (default last 24 h) and exact-match; export max 100k rows.
   Ban = game account ban with a chosen duration (1 h/1 d/7 d/30 d/permanent) + reason, applied by the filter.
+- Security lists (005): every list is edited as rows (value + comment) except Blocked words, which is pasted
+  text for bulk. IP allow/block lists accept CIDR ranges.
 - **Production needs the Laravel scheduler** (`php artisan schedule:run` every minute, e.g. Windows Task
   Scheduler) so `vfilter:prune-logs` runs daily at 03:30.
 
@@ -78,7 +82,7 @@ Run these in order. Each one runs specify → clarify → plan → tasks → ana
 ```
 /speckit-specify Logs viewer for filter_logs: filters by level, category, module, IP, username, charname, opcode and time range; live tail; export CSV; retention setting logs.retention_days with a scheduled prune job; live sessions page from filter_sessions with kick/ban actions via filter_commands.
 ```
-**005-security-lists**
+**005-security-lists** — ✅ done (branch `005-security-lists`)
 ```
 /speckit-specify Security pages backed by filter_lists and filter_ga_permissions: Allowed GM IPs, proxy-bypass IPs/usernames, Game Assistants with a per-command permission grid, Blocked IPs, Blocked HWIDs, Net Cafe IPs with special per-IP limits, blocked words. One value per line with // comments, validated.
 ```

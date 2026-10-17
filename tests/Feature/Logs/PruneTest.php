@@ -7,6 +7,7 @@ use App\Models\Filter\FilterLog;
 use App\Settings\SettingsRepository;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->travelTo(Carbon::parse('2026-10-17 12:00:00', 'UTC'));
@@ -54,7 +55,7 @@ it('runs from the console and is scheduled daily', function () {
 });
 
 it('deletes in TOP batches on SQL Server', function () {
-    if (Illuminate\Support\Facades\DB::connection('filter')->getDriverName() !== 'sqlsrv') {
+    if (DB::connection('filter')->getDriverName() !== 'sqlsrv') {
         $this->markTestSkipped('Needs SQL Server (DB_FILTER_DRIVER=sqlsrv).');
     }
 
