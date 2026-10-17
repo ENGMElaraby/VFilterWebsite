@@ -15,6 +15,14 @@ This feature delivers the empty, secured shell that every later page (dashboard,
 security lists, area rules) plugs into: who can sign in, what each person may do, a record of who
 changed what, and the basic look and language of the panel. It holds no filter pages yet.
 
+## Clarifications
+
+### Session 2026-10-17
+
+- Q: Who must use two-factor to sign in? → A: Everyone (owner, admin and viewer).
+- Q: How does a user recover a forgotten password? → A: Both: self-service email reset link when a mail server is configured, and owner reset (console for the owner) always available.
+- Q: Where is the panel reachable from? → A: Public internet over HTTPS, protected by two-factor and rate limits, with an optional IP allow-list (off by default).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Owner signs in securely (Priority: P1)
@@ -33,8 +41,8 @@ redirects to sign-in when signed out.
 **Acceptance Scenarios**:
 
 1. **Given** no panel users exist, **When** the operator runs the documented console setup step with an email, name and password, **Then** exactly one owner account is created and the step refuses to create a second owner the same way.
-2. **Given** an owner without two-factor set up, **When** they sign in for the first time, **Then** they must enrol an authenticator app (scan code, confirm one code) and receive one-time recovery codes before reaching any other page.
-3. **Given** an owner with two-factor enrolled, **When** they enter the correct email and password, **Then** they are asked for a current authenticator code or a recovery code, and only after a valid code reach the dashboard.
+2. **Given** any user (owner, admin or viewer) without two-factor set up, **When** they sign in for the first time, **Then** they must enrol an authenticator app (scan code, confirm one code) and receive one-time recovery codes before reaching any other page.
+3. **Given** a user with two-factor enrolled, **When** they enter the correct email and password, **Then** they are asked for a current authenticator code or a recovery code, and only after a valid code reach the dashboard.
 4. **Given** a signed-out visitor, **When** they open any panel page directly, **Then** they are sent to the sign-in page and return to the requested page after signing in.
 5. **Given** a user who enters a wrong password 5 times in a row, **When** they try again, **Then** further attempts from that email and IP are refused for a cooling-off period and the attempts are recorded.
 6. **Given** a signed-in user, **When** they sign out, **Then** their session ends and the back button does not show panel data.
@@ -58,7 +66,7 @@ they can no longer sign in.
 1. **Given** a signed-in owner, **When** they create a user with name, email, role (admin or viewer) and an initial password, **Then** the user can sign in and is asked to change the password on first sign-in.
 2. **Given** a signed-in admin or viewer, **When** they try to open user management by menu or URL, **Then** the menu item is hidden and direct access is refused.
 3. **Given** an owner editing a user, **When** they change the role or disable the account, **Then** the change applies on the user's next request (a disabled user's open sessions end).
-4. **Given** an owner, **When** they reset another user's password, **Then** the user's sessions end and they must set a new password at next sign-in.
+4. **Given** an owner, **When** they reset another user's password or two-factor, **Then** the user's sessions end and they must set a new password or re-enrol two-factor at next sign-in.
 5. **Given** the only owner account, **When** anyone tries to delete it, disable it, or change its role, **Then** the panel refuses, so there is always exactly one working owner.
 6. **Given** an owner creating a user, **When** the email is already used or the password is weaker than the policy, **Then** the form shows a clear error and nothing is saved.
 
@@ -111,6 +119,7 @@ and confirm the panel is still Arabic, right-to-left, and dark.
 - The owner loses their authenticator device: they sign in with a one-time recovery code; if all
   codes are used or lost, the server operator resets the owner's two-factor from the server console
   (documented step), and this is recorded in the audit log.
+- A password reset email is requested for an unknown email, or the mail server is down: the user sees the same neutral "if the account exists, a link was sent" message; the failure is logged for the operator.
 - The database is unreachable: the sign-in page shows a plain "service unavailable" message with no
   technical details, and nobody is signed in.
 - An owner changes their own email or password: they must confirm their current password first.
@@ -119,7 +128,7 @@ and confirm the panel is still Arabic, right-to-left, and dark.
 - A disabled user tries to sign in: they get the same generic "invalid credentials" message as a
   wrong password, so account status is not revealed.
 - Session idle for a long time: the user is signed out after the idle limit and must sign in again.
-- An admin enables two-factor voluntarily, then it is required for them from then on.
+- A staff member loses their authenticator device and recovery codes: the owner resets their two-factor from user management; they re-enrol at next sign-in. Recorded in the audit log.
 - A translation is missing in Arabic: the English text is shown rather than a raw key.
 
 ## Requirements *(mandatory)*
@@ -128,13 +137,15 @@ and confirm the panel is still Arabic, right-to-left, and dark.
 
 **Sign-in and sessions**
 
-- **FR-001**: The panel MUST require sign-in with email and password for every page except the sign-in, two-factor challenge and forced password-change pages.
-- **FR-002**: The owner account MUST use two-factor authentication with a time-based authenticator app code; recovery codes MUST be issued once at enrolment and each code MUST work only once.
-- **FR-003**: Admin and viewer accounts MAY enable the same two-factor authentication; once enabled it MUST be required for them.
+- **FR-001**: The panel MUST require sign-in with email and password for every page except the sign-in, two-factor challenge, forced password-change, forgot-password and password-reset pages.
+- **FR-002**: Every account (owner, admin and viewer) MUST use two-factor authentication with a time-based authenticator app code, enrolled at first sign-in before any other page is reachable; recovery codes MUST be issued once at enrolment and each code MUST work only once.
+- **FR-003**: Users MUST NOT be able to turn two-factor off. The owner MUST be able to reset a staff member's two-factor (forcing re-enrolment at next sign-in); the console resets the owner's.
 - **FR-004**: The panel MUST limit failed sign-in and two-factor attempts (at most 5 failures per email+IP per minute, then a cooling-off period) and record each failure in the audit log.
 - **FR-005**: Sign-in error messages MUST NOT reveal whether an email exists or an account is disabled.
 - **FR-006**: Sessions MUST end after 2 hours of inactivity, on sign-out, on password reset, and when the account is disabled.
 - **FR-007**: Passwords MUST be at least 12 characters and MUST NOT appear in known-breach lists where that check is available; they MUST be stored only as one-way hashes.
+- **FR-007a**: When a mail server is configured, any user MUST be able to request a password reset link by email from the sign-in page. The link MUST be single-use, expire after 60 minutes, and the request page MUST show the same message whether or not the email exists. A reset ends the user's sessions and still requires two-factor at next sign-in. When no mail server is configured, the forgot-password link MUST be hidden.
+- **FR-007b**: The panel MUST support an optional IP allow-list, configured in the environment file and off by default. When on, requests from other IPs MUST be refused before the sign-in page is shown.
 - **FR-008**: The first owner MUST be created only through a server console step, never through a public web page. The same console path MUST be able to reset the owner's password and two-factor.
 
 **Roles and user management**
@@ -190,12 +201,12 @@ and confirm the panel is still Arabic, right-to-left, and dark.
 ## Assumptions
 
 - Users are a small staff team (fewer than 20 panel accounts); self-registration is not needed.
-- Password reset by email is out of scope for v1, because there may be no mail server. The owner resets staff passwords; the console resets the owner. Email reset can be added later.
+- Password recovery has two paths (clarified 2026-10-17): an email reset link when a mail server is configured, and owner reset (console for the owner) that always works. Mail server settings live in the environment file, never in the panel database.
 - Authenticator-app codes (time-based one-time codes) are the two-factor method; SMS and email codes are out of scope.
-- Two-factor is mandatory only for the owner; admins and viewers can opt in.
+- Two-factor is mandatory for every role (clarified 2026-10-17).
 - Idle timeout of 2 hours and lockout of 5 failures/minute are reasonable defaults and can become settings later.
 - Display times use the server's configured time zone for v1; per-user time zones are out of scope.
 - Audit log retention is unlimited in v1; pruning can be added with the logs feature.
 - The VFILTER SQL Server database already exists and is reachable from the panel; creating it is an operator setup step, not part of this feature.
-- The panel runs behind HTTPS in production; HTTPS setup is part of deployment, not this feature.
+- The panel is reachable from the public internet and MUST be served only over HTTPS in production (clarified 2026-10-17); obtaining the certificate is a deployment step, not this feature.
 - The role permissions for admin vs viewer on future pages (settings, commands) are defined by each later feature; this feature provides the roles and the checks.
