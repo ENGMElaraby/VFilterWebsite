@@ -19,12 +19,12 @@ description: "Tasks for 001 Admin Panel Shell"
 
 ## Phase 1: Setup
 
-- [ ] T001 Rename the `sqlsrv` connection to `filter` in config/database.php, set `'default' => env('DB_CONNECTION', 'filter')`, add `encrypt` / `trust_server_certificate` from `DB_ENCRYPT` / `DB_TRUST_SERVER_CERTIFICATE`, and let `DB_FILTER_DRIVER` switch the `filter` connection to `sqlite` (`database` = `DB_DATABASE`) for tests
-- [ ] T002 [P] Update .env.example: `DB_CONNECTION=filter`, `DB_HOST`, `DB_PORT=1433`, `DB_DATABASE=VFILTER`, `DB_USERNAME`, `DB_PASSWORD`, `DB_ENCRYPT=yes`, `DB_TRUST_SERVER_CERTIFICATE=false`, `SESSION_DRIVER=database`, `SESSION_LIFETIME=120`, `SESSION_SECURE_COOKIE=true`, `PANEL_ALLOWED_IPS=`, `TRUSTED_PROXIES=`, `APP_TIMEZONE=UTC`, `APP_LOCALE=en`, `APP_FALLBACK_LOCALE=en`, `MAIL_MAILER=log`
-- [ ] T003 [P] Set phpunit.xml env: `DB_CONNECTION=filter`, `DB_FILTER_DRIVER=sqlite`, `DB_DATABASE=:memory:`, `SESSION_DRIVER=array`, `MAIL_MAILER=array`, `PANEL_ALLOWED_IPS=` (empty)
-- [ ] T004 [P] Create config/vfilter.php with `allowed_ips` (array from `PANEL_ALLOWED_IPS`, comma-separated IPs/CIDRs, empty = off), `audit.redact` keys (`password`, `password_confirmation`, `current_password`, `remember_token`, `app_authentication_secret`, `app_authentication_recovery_codes`, `token`, `code`), `login.max_attempts=5`, `login.decay_seconds=60`
-- [ ] T005 [P] Create lang skeletons lang/en/panel.php, lang/ar/panel.php, lang/en/roles.php, lang/ar/roles.php, lang/en/audit.php, lang/ar/audit.php; publish Laravel's lang files (`php artisan lang:publish`) and add Arabic lang/ar/{validation,auth,passwords,pagination}.php
-- [ ] T006 Confirm baseline is green: `php artisan test`, `./vendor/bin/phpstan`, `./vendor/bin/pint --test`
+- [X] T001 Rename the `sqlsrv` connection to `filter` in config/database.php, set `'default' => env('DB_CONNECTION', 'filter')`, add `encrypt` / `trust_server_certificate` from `DB_ENCRYPT` / `DB_TRUST_SERVER_CERTIFICATE`, and let `DB_FILTER_DRIVER` switch the `filter` connection to `sqlite` (`database` = `DB_DATABASE`) for tests
+- [X] T002 [P] Update .env.example: `DB_CONNECTION=filter`, `DB_HOST`, `DB_PORT=1433`, `DB_DATABASE=VFILTER`, `DB_USERNAME`, `DB_PASSWORD`, `DB_ENCRYPT=yes`, `DB_TRUST_SERVER_CERTIFICATE=false`, `SESSION_DRIVER=database`, `SESSION_LIFETIME=120`, `SESSION_SECURE_COOKIE=true`, `PANEL_ALLOWED_IPS=`, `TRUSTED_PROXIES=`, `APP_DISPLAY_TIMEZONE=UTC`, `APP_LOCALE=en`, `APP_FALLBACK_LOCALE=en`, `MAIL_MAILER=log`
+- [X] T003 [P] Set phpunit.xml env: `DB_CONNECTION=filter`, `DB_FILTER_DRIVER=sqlite`, `DB_DATABASE=:memory:`, `SESSION_DRIVER=array`, `MAIL_MAILER=array`, `PANEL_ALLOWED_IPS=` (empty)
+- [X] T004 [P] Create config/vfilter.php with `allowed_ips` (array from `PANEL_ALLOWED_IPS`, comma-separated IPs/CIDRs, empty = off), `audit.redact` keys (`password`, `password_confirmation`, `current_password`, `remember_token`, `app_authentication_secret`, `app_authentication_recovery_codes`, `token`, `code`), `login.max_attempts=5`, `login.decay_seconds=60`
+- [X] T005 [P] Create lang skeletons lang/en/panel.php, lang/ar/panel.php, lang/en/roles.php, lang/ar/roles.php, lang/en/audit.php, lang/ar/audit.php; publish Laravel's lang files (`php artisan lang:publish`) and add Arabic lang/ar/{validation,auth,passwords,pagination}.php
+- [X] T006 Confirm baseline is green: `php artisan test`, `./vendor/bin/phpstan`, `./vendor/bin/pint --test`
 
 ---
 
@@ -116,7 +116,7 @@ description: "Tasks for 001 Admin Panel Shell"
 ### Tests (write first, must fail)
 
 - [ ] T046 [P] [US3] tests/Feature/Audit/AuditLogPolicyTest.php: owner and admin can list/view; viewer 403 and no menu item; no create/edit/delete routes or actions for anyone
-- [ ] T047 [P] [US3] tests/Feature/Audit/AuditLogPageTest.php: newest first, paginated 25; filters actor, action, date range; old → new values rendered; action labels translated, unknown action shows raw id; times shown in `APP_TIMEZONE`
+- [ ] T047 [P] [US3] tests/Feature/Audit/AuditLogPageTest.php: newest first, paginated 25; filters actor, action, date range; old → new values rendered; action labels translated, unknown action shows raw id; times shown in `APP_DISPLAY_TIMEZONE`
 
 ### Implementation
 

@@ -37,7 +37,7 @@ reaching SQL Server. Dev: macOS with Herd.
 **Performance Goals**: Sign-in to dashboard < 30 s for a human (SC-001); audit log first page
 < 2 s at 1,000,000 rows (SC-007).
 
-**Constraints**: All times UTC in DB, shown in `APP_TIMEZONE`. No secrets in DB/logs/UI. No writes to
+**Constraints**: All times UTC in DB, shown in `APP_DISPLAY_TIMEZONE`. No secrets in DB/logs/UI. No writes to
 SRO_VT_* databases. No contact with the filter. Every string translatable (EN/AR).
 
 **Scale/Scope**: < 20 panel users; audit log grows unbounded (millions of rows later, from
