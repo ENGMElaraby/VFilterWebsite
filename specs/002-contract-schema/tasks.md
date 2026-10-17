@@ -12,17 +12,17 @@ description: "Tasks for 002 Shared Contract Schema and Settings Repository"
 
 ## Phase 1: Setup
 
-- [ ] T001 Set `Schema::defaultTimePrecision(3)` in app/Providers/AppServiceProvider.php `register()` so every date-time column is `datetime2(3)` on SQL Server (research §1)
-- [ ] T002 [P] Create enums in app/Enums/Filter/: `ConfigArea` (settings, lists, area_rules, cooldowns, modules, ga_permissions), `ModuleType` (gateway, agent, download), `CommandName` (start, stop, restart, set_gateway_mode, reload, kick, notice, ban), `CommandStatus` (pending, running, done, failed), `GatewayMode` (gm, inspection, public), `ModuleState` (stopped, starting, running, error), `LogLevel` (debug, info, warn, error, security), `LogCategory` (connection, login, exploit, flood, limit, restriction, command, chat, gm), `SettingType` (bool, int, string, json, color), `RestartScope` (none, filter, gameserver, client), `CooldownAction` (the 17 actions in data-model.md)
+- [X] T001 Set `Schema::defaultTimePrecision(3)` in app/Providers/AppServiceProvider.php `register()` so every date-time column is `datetime2(3)` on SQL Server (research §1)
+- [X] T002 [P] Create enums in app/Enums/Filter/: `ConfigArea` (settings, lists, area_rules, cooldowns, modules, ga_permissions), `ModuleType` (gateway, agent, download), `CommandName` (start, stop, restart, set_gateway_mode, reload, kick, notice, ban), `CommandStatus` (pending, running, done, failed), `GatewayMode` (gm, inspection, public), `ModuleState` (stopped, starting, running, error), `LogLevel` (debug, info, warn, error, security), `LogCategory` (connection, login, exploit, flood, limit, restriction, command, chat, gm), `SettingType` (bool, int, string, json, color), `RestartScope` (none, filter, gameserver, client), `CooldownAction` (the 17 actions in data-model.md)
 
 ---
 
 ## Phase 2: Foundational
 
-- [ ] T003 Migrations database/migrations/2026_10_17_100001_create_filter_config_tables.php (filter_modules, filter_settings, filter_lists, filter_area_rules, filter_cooldowns, filter_ga_permissions, filter_config_version) exactly per data-model.md: types, lengths, nullability, defaults, PKs, indexes, no FKs
-- [ ] T004 [P] Migration database/migrations/2026_10_17_100002_create_filter_runtime_tables.php (filter_commands, filter_status, filter_sessions, filter_logs) exactly per data-model.md
-- [ ] T005 [P] Models in app/Models/Filter/: FilterModule, FilterSetting, FilterListEntry, FilterAreaRule, FilterCooldown, FilterGaPermission (configuration, each with `public const AREA = ConfigArea::…`), FilterCommand, FilterStatus, FilterSession, FilterLog (filter-owned), FilterConfigVersion; table names, string PKs where defined (`$incrementing = false`, `$keyType = 'string'`), `$timestamps = false`, enum and JSON casts, datetime casts
-- [ ] T006 [P] Model factories for FilterModule, FilterListEntry, FilterAreaRule, FilterCommand, FilterLog, FilterSession in database/factories/Filter/
+- [X] T003 Migrations database/migrations/2026_10_17_100001_create_filter_config_tables.php (filter_modules, filter_settings, filter_lists, filter_area_rules, filter_cooldowns, filter_ga_permissions, filter_config_version) exactly per data-model.md: types, lengths, nullability, defaults, PKs, indexes, no FKs
+- [X] T004 [P] Migration database/migrations/2026_10_17_100002_create_filter_runtime_tables.php (filter_commands, filter_status, filter_sessions, filter_logs) exactly per data-model.md
+- [X] T005 [P] Models in app/Models/Filter/: FilterModule, FilterSetting, FilterListEntry, FilterAreaRule, FilterCooldown, FilterGaPermission (configuration, each with `public const AREA = ConfigArea::…`), FilterCommand, FilterStatus, FilterSession, FilterLog (filter-owned), FilterConfigVersion; table names, string PKs where defined (`$incrementing = false`, `$keyType = 'string'`), `$timestamps = false`, enum and JSON casts, datetime casts
+- [X] T006 [P] Model factories for FilterModule, FilterListEntry, FilterAreaRule, FilterCommand, FilterLog, FilterSession in database/factories/Filter/
 
 **Checkpoint**: `php artisan migrate` works on SQLite.
 
