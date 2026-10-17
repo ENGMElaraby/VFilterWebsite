@@ -73,6 +73,8 @@ Run these in order. Each one runs specify → clarify → plan → tasks → ana
 ```
 Later: visuals/events/triggers pages, then the item mall and custom-window admin (daily reward,
 lucky spin, battle pass).
+After the client DLL: **Silk Stall** admin (settings + sales log), planned in
+`docs/features/silk-stall.md` with a draft `/speckit-specify` prompt.
 
 ## Definition of done for phase 1 (features 001–004)
 You log in, see each module's status, click "Restart Agent" and see the command move from pending
