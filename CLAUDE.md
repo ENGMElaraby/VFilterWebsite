@@ -54,6 +54,8 @@ Don't write feature code without a spec and plan in `specs/`. Small fixes and ch
 composer install && npm install
 cp .env.example .env && php artisan key:generate
 php artisan migrate --database=filter
+php artisan vfilter:create-owner                      # create the one panel owner
+php artisan vfilter:reset-owner --password --two-factor   # recover owner access
 composer run dev          # serve + queue + vite
 php artisan test          # Pest
 ./vendor/bin/pint         # code style (must pass before commit)
@@ -67,7 +69,12 @@ php artisan test          # Pest
 - Status is "online" only if `filter_status.heartbeat_at` is less than 15 s old.
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.
 - Roles: `owner` > `admin` > `viewer`. Every route and Filament page has a policy.
-- Times are stored in UTC and shown in the server time zone setting.
+- Times are stored in UTC and shown in `APP_DISPLAY_TIMEZONE` (`config('vfilter.display_timezone')`).
+- Every change to users, settings or commands writes `audit_log` through `App\Services\AuditLogger`
+  (use `AuditLogger::transaction()` to save a change and its entry together). Action ids are listed in
+  `specs/001-auth-and-shell/contracts/audit-actions.md`; add labels to `lang/{en,ar}/audit.php`.
+- Panel strings live in `lang/{en,ar}/panel.php`; both files must have the same keys (tested).
+- A new panel page needs an entry in `tests/Feature/Security/RouteAuthorizationTest.php`.
 
 ## Git
 - Remote: `https://github.com/ENGMElaraby/VFilterWebsite`. Branches use spec-kit's feature

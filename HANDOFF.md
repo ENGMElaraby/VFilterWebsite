@@ -1,6 +1,7 @@
 # HANDOFF: VFilterWebsite
 
-**Date:** 2026-10-17 · **Status:** Spec Kit and project docs are set up. No Laravel code yet.
+**Date:** 2026-10-17 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
+(branch `001-auth-and-shell`, 93 tests green). Next: merge 001, then `002-contract-schema`.
 
 ## What exists
 | Path | What |
@@ -8,7 +9,11 @@
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.1.0 draft |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.1.1 draft |
+| `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
+| `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
+| `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
+| `app/`, `database/`, `lang/`, `tests/` | The Laravel app: sign-in + 2FA, users, audit log, EN/AR |
 | `docs/maxiguard-feature-map.md` | All 50 MaxiGuard panel pages we're matching |
 
 ## Decisions made
@@ -16,34 +21,36 @@
   through the shared `VFILTER` SQL Server DB (config tables, version counter, command queue).
 - Stack: latest stable PHP + Laravel, Filament admin, Pest, SQL Server (`pdo_sqlsrv`), EN + AR (RTL).
 - We are self-hosted, so there are no license/top-up/purchase pages.
+- Panel users: owner + staff with roles `admin` and `viewer` (001).
+- Two-factor (authenticator app) is required for **every** panel user; it can't be turned off (001).
+- Password recovery: email link when a mail server is set, and owner reset always; the console
+  resets the owner (001).
+- The panel is public over HTTPS, with an optional IP allow-list (`PANEL_ALLOWED_IPS`) (001).
+- Admin UI: Filament (chosen).
 
 ## Open questions (answer in `/speckit-clarify`)
 1. SQL Server version and host. Will the panel run on the same Windows server as SRO, or elsewhere?
+   (Needed to run migrations and the `@group sqlsrv` tests; so far everything ran on SQLite.)
 2. Production web server: IIS on the SRO box, or a separate Linux VPS?
-3. Panel users: just you, or also staff (admin/viewer roles)?
-4. Filament (fast, admin-style) vs a custom Livewire/Blade design. The default is Filament.
 
-## Step 0: one-time setup on your Mac
+## Step 0: local setup (done once)
+The app is already scaffolded. On a fresh clone:
 ```bash
 cd /Users/mohammedelaraby/Work/Silkroad/Filter/VFilterWebsite
-php -v                                   # expect latest stable (8.5.x); update via Herd if older
-# SQL Server driver for PHP (Herd: Settings → PHP → Extensions, or):
-pecl install sqlsrv pdo_sqlsrv           # needs: brew install unixodbc msodbcsql18
-# Create the Laravel app IN this folder (keeps .specify/.claude/docs):
-laravel new tmp-app --no-interaction && rsync -a tmp-app/ ./ && rm -rf tmp-app
-composer require filament/filament && php artisan filament:install --panels
-composer require --dev pestphp/pest larastan/larastan && ./vendor/bin/pest --init
-git add -A && git commit -m "Scaffold Laravel + Filament"
-git push -u origin main
+php -v      # must be 8.5. Your global `php` is 7.4: set PHP 8.5 as default in the Herd app.
+composer install && cp .env.example .env && php artisan key:generate
+# SQL Server: fill DB_* in .env. Local preview without SQL Server: in .env set
+#   DB_FILTER_DRIVER=sqlite and DB_DATABASE=<absolute path>/database/database.sqlite
+php artisan migrate
+php artisan vfilter:create-owner          # the one owner; 2FA is set up at first sign-in
+php artisan serve                         # http://127.0.0.1:8000/admin
 ```
-I couldn't push to GitHub from here: this session has no access to `ENGMElaraby/VFilterWebsite`,
-and push to `VFilter` is refused. Push from your Mac. To let Claude push later, install the Claude
-GitHub App on both repos.
+Herd's PHP 8.5 already has `sqlsrv` / `pdo_sqlsrv`.
 
 ## Step 1: build features with Spec Kit (open Claude Code in this folder)
 Run these in order. Each one runs specify → clarify → plan → tasks → analyze → implement.
 
-**001-auth-and-shell**
+**001-auth-and-shell** — ✅ done (branch `001-auth-and-shell`)
 ```
 /speckit-specify Admin panel shell for VFilter: login with email+password, 2FA for owner, roles owner/admin/viewer, user management (owner only), audit log page showing who changed what, English + Arabic (RTL) language switch, dark/light theme. Uses the VFILTER SQL Server database as the default connection. See docs/shared-contract.md (website-only tables).
 ```

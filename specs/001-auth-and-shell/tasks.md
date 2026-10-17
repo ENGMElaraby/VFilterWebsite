@@ -153,12 +153,12 @@ description: "Tasks for 001 Admin Panel Shell"
 
 ## Phase 7: Polish & cross-cutting
 
-- [ ] T062 [P] tests/Feature/Security/RouteAuthorizationTest.php: iterate every registered `/admin` route and assert guest → redirect, viewer → only allowed pages (SC-003)
-- [ ] T062b [P] tests/Feature/Audit/AuditLogPerformanceTest.php tagged `@group sqlsrv` (skipped on SQLite): seed 1,000,000 `audit_log` rows, assert the first page query with each filter runs under 2 s (SC-007)
-- [ ] T063 [P] Update docs/shared-contract.md in **both** repos (VFilterWebsite and ../VFilter): version 0.1.0 → 0.1.1 (PATCH), note that website-only table columns are defined in `specs/001-auth-and-shell/data-model.md`
-- [ ] T064 [P] Update HANDOFF.md (status: 001 built; next 002) and CLAUDE.md commands (`vfilter:create-owner`, `vfilter:reset-owner`)
-- [ ] T065 Run the full quickstart.md "Tests only" section; then, if a SQL Server is reachable, the SQL Server section and scenarios 1–9
-- [ ] T066 Final gates: `php artisan test`, `./vendor/bin/phpstan`, `./vendor/bin/pint --test` all green; coverage ≥ 80% for app/ (`php artisan test --coverage --min=80` when a coverage driver is available)
+- [X] T062 [P] tests/Feature/Security/RouteAuthorizationTest.php: iterate every registered `/admin` route and assert guest → redirect, viewer → only allowed pages (SC-003)
+- [X] T062b [P] tests/Feature/Audit/AuditLogPerformanceTest.php tagged `@group sqlsrv` (skipped on SQLite): seed 1,000,000 `audit_log` rows, assert the first page query with each filter runs under 2 s (SC-007)
+- [X] T063 [P] Update docs/shared-contract.md in **both** repos (VFilterWebsite and ../VFilter): version 0.1.0 → 0.1.1 (PATCH), note that website-only table columns are defined in `specs/001-auth-and-shell/data-model.md`
+- [X] T064 [P] Update HANDOFF.md (status: 001 built; next 002) and CLAUDE.md commands (`vfilter:create-owner`, `vfilter:reset-owner`)
+- [ ] T065 (Tests-only part done 2026-10-17; SQL Server part waits for a server) Run the full quickstart.md "Tests only" section; then, if a SQL Server is reachable, the SQL Server section and scenarios 1–9
+- [ ] T066 (Tests, phpstan, pint green 2026-10-17; coverage needs pcov/xdebug, not installed in Herd PHP 8.5) Final gates: `php artisan test`, `./vendor/bin/phpstan`, `./vendor/bin/pint --test` all green; coverage ≥ 80% for app/ (`php artisan test --coverage --min=80` when a coverage driver is available)
 
 ---
 
