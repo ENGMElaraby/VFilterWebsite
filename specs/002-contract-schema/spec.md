@@ -16,6 +16,12 @@ panel changes filter configuration: save the change, tell the filter something c
 who did it, all together or not at all. It adds no new pages; later features (dashboard, logs,
 security lists, settings, area rules) build their screens on top of it.
 
+## Clarifications
+
+### Session 2026-10-17
+
+- Q: How does the filter know what changed? → A: One change counter per configuration area (`settings`, `lists`, `area_rules`, `cooldowns`, `modules`, `ga_permissions`); the filter reloads only the areas whose counter moved. Contract MINOR change (0.2.0).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The shared database exists exactly as agreed (Priority: P1)
@@ -56,12 +62,12 @@ confirm none of the three happened.
 
 **Acceptance Scenarios**:
 
-1. **Given** a setting with value `false`, **When** an admin saves `true`, **Then** the setting holds `true`, the configuration change counter increased by exactly 1, and one audit entry shows the actor, the setting key and `false → true`.
+1. **Given** a setting with value `false`, **When** an admin saves `true`, **Then** the setting holds `true`, the `settings` change counter increased by exactly 1 (other areas unchanged), and one audit entry shows the actor, the setting key and `false → true`.
 2. **Given** an admin saves a value identical to the current one, **When** the save runs, **Then** nothing is written, the counter does not change and no audit entry is created.
-3. **Given** an admin saves several settings at once (one form), **When** the save completes, **Then** all changed values are stored, the counter increases by exactly 1, and each changed key has its own audit entry.
+3. **Given** an admin saves several settings at once (one form), **When** the save completes, **Then** all changed values are stored, each touched area's counter increases by exactly 1, and each changed key has its own audit entry.
 4. **Given** an error happens after the value was written but before the audit entry, **When** the save fails, **Then** the value, the counter and the audit log are all unchanged.
 5. **Given** a value that does not match the setting's type (e.g. text for a number), **When** it is saved, **Then** it is refused with a clear error and nothing is written.
-6. **Given** two admins save different settings at the same moment, **When** both finish, **Then** both changes are stored and the counter increased by 2.
+6. **Given** two admins save different settings at the same moment, **When** both finish, **Then** both changes are stored and the `settings` counter increased by 2.
 
 ---
 
@@ -79,16 +85,16 @@ run the defaults again and confirm nothing is duplicated and no operator-changed
 
 **Acceptance Scenarios**:
 
-1. **Given** an empty contract schema, **When** the defaults are loaded, **Then** there is one Gateway, one Download and one Agent module (all disabled until their addresses are filled in), all 17 cooldown actions at 0 seconds, one change-counter row, and the core settings with their default values.
+1. **Given** an empty contract schema, **When** the defaults are loaded, **Then** there is one Gateway, one Download and one Agent module (all disabled until their addresses are filled in), all 17 cooldown actions at 0 seconds, one change-counter row per area, and the core settings with their default values.
 2. **Given** the operator changed a setting or a module address, **When** the defaults are loaded again, **Then** the changed values are kept and only missing rows are added.
-3. **Given** defaults are loaded, **When** this happens, **Then** it is recorded in the audit log as a system action and the change counter increases once.
+3. **Given** defaults are loaded, **When** this happens, **Then** it is recorded in the audit log as a system action and each area that received rows has its counter increased once.
 
 ---
 
 ### Edge Cases
 
 - The filter reads while the panel is mid-save: it sees either the whole old configuration or the whole new one, never half (transaction).
-- The change counter row is missing (manually deleted): the next save recreates it instead of failing.
+- An area's change counter row is missing (manually deleted): the next save to that area recreates it instead of failing.
 - A setting key that is not known to the panel is saved: refused (only known keys can be written).
 - A save is attempted from a console or scheduled job with no signed-in user: allowed, audited as `system` or `console`.
 - Module limits are violated at the data level (a second gateway, a sixth agent): refused when saved through the panel's saving capability.
@@ -110,17 +116,18 @@ run the defaults again and confirm nothing is duplicated and no operator-changed
 **Saving configuration**
 
 - **FR-006**: The panel MUST provide one shared capability for writing filter configuration (settings, lists, area rules, cooldowns, modules, Game Assistant permissions). Later features MUST use it; nothing else writes those tables.
-- **FR-007**: Each save MUST, in one transaction: write only what actually changed, increase the configuration change counter by exactly 1 if anything changed, and write one audit entry per changed item with actor, item and old → new values.
+- **FR-007**: Each save MUST, in one transaction: write only what actually changed, increase the change counter of each configuration area it touched by exactly 1, and write one audit entry per changed item with actor, item and old → new values.
 - **FR-008**: A save with no actual change MUST write nothing.
 - **FR-009**: Setting values MUST be validated against the setting's declared type (`bool`, `int`, `string`, `json`, `color`) before saving; invalid values MUST be refused with a clear message.
 - **FR-010**: Only settings that exist (seeded or from the settings catalog) MUST be writable; unknown keys MUST be refused.
 - **FR-011**: Module saves MUST enforce exactly 1 gateway, exactly 1 download and 1–5 agents named `Agent1`…`Agent5` in order.
 - **FR-012**: Setting reads by the panel MUST return typed values (true/false, numbers, text, decoded JSON, color string).
-- **FR-013**: Concurrent saves MUST not lose updates to the change counter (each save adds exactly 1).
+- **FR-013**: Concurrent saves MUST not lose updates to a change counter (each save adds exactly 1 to each area it touched).
+- **FR-013a**: `filter_config_version` MUST hold one row per configuration area (`settings`, `lists`, `area_rules`, `cooldowns`, `modules`, `ga_permissions`) instead of a single row; `docs/shared-contract.md` MUST be updated in both repositories to 0.2.0 (MINOR) with this change, and its rule 4 reworded so the filter reloads only areas whose counter changed.
 
 **Defaults**
 
-- **FR-014**: The panel MUST provide a repeatable defaults step that adds missing rows only: module slots (Gateway, Download, Agent1, disabled), all 17 cooldown actions at 0, the change-counter row, and the core settings listed in Assumptions.
+- **FR-014**: The panel MUST provide a repeatable defaults step that adds missing rows only: module slots (Gateway, Download, Agent1, disabled), all 17 cooldown actions at 0, one change-counter row per area, and the core settings listed in Assumptions.
 - **FR-015**: Loading defaults MUST never overwrite an existing value and MUST be audited as a `system` action.
 
 **Data access for later features**
@@ -140,7 +147,7 @@ run the defaults again and confirm nothing is duplicated and no operator-changed
 - **Module status**: one heartbeat row per module written by the filter.
 - **Live session**: one connected player written by the filter.
 - **Filter log entry**: one event written by the filter.
-- **Configuration change counter**: one number increased on every configuration save.
+- **Configuration change counter**: one number per configuration area, increased on every save that touches that area.
 
 ## Success Criteria *(mandatory)*
 
@@ -156,6 +163,6 @@ run the defaults again and confirm nothing is duplicated and no operator-changed
 
 - Core settings seeded now (the full ~300-switch catalog comes in feature 006): `server.start_in_inspection` (bool, false), `logs.retention_days` (int, 30), `limits.ip` (int, 0 = unlimited), `limits.pc` (int, 0), `login.captcha.enabled` (bool, false).
 - Default module addresses use vSRO defaults (Gateway 15779, Download 15881, Agent 15884) on `127.0.0.1`, disabled until the operator fills in real and guard addresses in feature 003.
-- `filter_config_version` stays one row (`id = 1`) as the contract says; the filter reloads all configuration when the number changes (configuration is small). Splitting per area is a later option.
+- The filter polls all area counters in one query every 2 s and reloads each area whose number changed (clarified 2026-10-17).
 - The `VFILTER` database is on the same SQL Server instance as the game databases; cross-database access is not used in this feature.
 - Panel tables from feature 001 already exist in the same database.
