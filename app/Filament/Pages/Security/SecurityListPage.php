@@ -96,7 +96,11 @@ abstract class SecurityListPage extends Page
     public function save(): void
     {
         $this->resetErrorBag();
-        $text = (string) ($this->data['text'] ?? '');
+        $text = $this->data['text'] ?? '';
+
+        if (! is_string($text)) {
+            return;
+        }
 
         try {
             $result = app(ListEditor::class)->save(static::list(), $text, $this->fingerprint);
@@ -154,7 +158,8 @@ abstract class SecurityListPage extends Page
             return false;
         }
 
-        $after = app(ListParser::class)->parse(ListName::AllowedIps, (string) ($this->data['text'] ?? ''));
+        $text = $this->data['text'] ?? '';
+        $after = app(ListParser::class)->parse(ListName::AllowedIps, is_string($text) ? $text : '');
 
         return ! collect($after->entries)->contains(fn (array $entry): bool => IpRange::contains($entry['value'], $ip));
     }

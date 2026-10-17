@@ -62,3 +62,23 @@ it('refuses more than 10,000 entries', function () {
 
     expect(parseList(ListName::BlockedWords, $text)->errors[0]['line'])->toBe(0);
 });
+
+it('keeps "//" inside blocked words but still reads comments after a space', function () {
+    $parsed = parseList(ListName::BlockedWords, "http://spam.example // link spam\n// note");
+
+    expect(parsedValues($parsed))->toBe(['http://spam.example' => 'link spam']);
+});
+
+it('stores prefixes canonically and full-length ranges as plain addresses', function (string $line, string $stored) {
+    expect(array_keys(parsedValues(parseList(ListName::BlockedIps, $line))))->toBe([$stored]);
+})->with([
+    ['1.2.3.4/08', '1.0.0.0/8'],
+    ['1.2.3.4/32', '1.2.3.4'],
+    ['2001:db8::1/128', '2001:db8::1'],
+]);
+
+it('treats width and ß variants as the same word', function () {
+    $parsed = parseList(ListName::BlockedWords, "hack\nＨＡＣＫ\nstrasse\nStraße");
+
+    expect(array_keys(parsedValues($parsed)))->toBe(['hack', 'strasse'])->and($parsed->duplicates)->toBe(2);
+});

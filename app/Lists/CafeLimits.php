@@ -51,10 +51,6 @@ class CafeLimits
     {
         Gate::authorize('manage-filter-settings');
 
-        if (! in_array($ip, $this->cafeIps(), true)) {
-            throw new InvalidArgumentException(__('panel.cafe.not_cafe', ['ip' => $ip]));
-        }
-
         $params = [];
 
         foreach (self::FIELDS as $field) {
@@ -67,17 +63,27 @@ class CafeLimits
             $params[$field] = $value;
         }
 
-        $rule = $this->rule($ip);
+        // Membership check and write in one transaction, with the list row locked, so a cafe IP
+        // removed meanwhile cannot leave an orphan rule (FR-010).
+        $this->store->batch(function (ConfigStore $store) use ($ip, $params): void {
+            $isCafe = FilterListEntry::query()->where('list', ListName::NetCafeIps->value)->where('value', $ip)->lockForUpdate()->exists();
 
-        if ($rule === null) {
-            $this->store->create(FilterAreaRule::class, [
-                'rule' => self::RULE, 'area' => self::AREA_EVERYWHERE, 'target' => $ip, 'params' => $params, 'enabled' => true,
-            ]);
+            if (! $isCafe) {
+                throw new InvalidArgumentException(__('panel.cafe.not_cafe', ['ip' => $ip]));
+            }
 
-            return;
-        }
+            $rule = $this->rule($ip);
 
-        $this->store->update($rule, ['params' => $params]);
+            if ($rule === null) {
+                $store->create(FilterAreaRule::class, [
+                    'rule' => self::RULE, 'area' => self::AREA_EVERYWHERE, 'target' => $ip, 'params' => $params, 'enabled' => true,
+                ]);
+
+                return;
+            }
+
+            $store->update($rule, ['params' => $params]);
+        });
     }
 
     private function rule(string $ip): ?FilterAreaRule

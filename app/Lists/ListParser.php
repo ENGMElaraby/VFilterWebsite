@@ -3,6 +3,7 @@
 namespace App\Lists;
 
 use InvalidArgumentException;
+use Normalizer;
 
 /**
  * Reads "value // comment" lines into entries (spec 005, FR-002/FR-003). Pure: no database access.
@@ -26,7 +27,7 @@ class ListParser
 
         foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $index => $raw) {
             $line = $index + 1;
-            [$value, $comment] = $this->split(trim($raw));
+            [$value, $comment] = $this->split(trim($raw), $list->format());
 
             if ($value === '') {
                 continue;
@@ -68,23 +69,32 @@ class ListParser
      */
     public static function key(ListName $list, string $value): string
     {
-        return $list->format()->isCaseInsensitive() ? mb_strtolower($value) : $value;
+        if (! $list->format()->isCaseInsensitive()) {
+            return $value;
+        }
+
+        // NFKC + full case folding, close to SQL Server's *_CI_AS collation (width, ß/ss), so
+        // the (list, value) unique index never sees two values the parser kept apart.
+        return mb_convert_case((string) Normalizer::normalize($value, Normalizer::FORM_KC), MB_CASE_FOLD);
     }
 
     /**
+     * Words may contain "//" (e.g. "http://spam"), so there a comment must start the line or follow
+     * a space. Other formats never contain "//".
+     *
      * @return array{0: string, 1: string|null}
      */
-    private function split(string $line): array
+    private function split(string $line, ListFormat $format): array
     {
-        $position = strpos($line, self::COMMENT_MARKER);
+        $pattern = $format === ListFormat::Word ? '~(?:^|\s)//(.*)$~u' : '~//(.*)$~u';
 
-        if ($position === false) {
+        if (preg_match($pattern, $line, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return [$line, null];
         }
 
-        $comment = trim(substr($line, $position + strlen(self::COMMENT_MARKER)));
+        $comment = trim($match[1][0]);
 
-        return [trim(substr($line, 0, $position)), $comment === '' ? null : $comment];
+        return [trim(substr($line, 0, $match[0][1])), $comment === '' ? null : $comment];
     }
 
     private function validate(ListFormat $format, string $value): string

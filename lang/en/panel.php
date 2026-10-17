@@ -361,6 +361,7 @@ return [
             'hwid' => 'HWIDs cannot contain spaces',
             'too_long' => 'longer than :max characters',
             'comment' => 'comment longer than 256 characters',
+            'collation' => 'Two values count as the same in the database (letter case, width or accents). Remove one and save again.',
             'too_many' => 'A list can hold at most :max entries.',
         ],
     ],

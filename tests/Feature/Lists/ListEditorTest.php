@@ -1,5 +1,6 @@
 <?php
 
+use App\Config\ConfigStore;
 use App\Enums\Filter\ConfigArea;
 use App\Lists\InvalidListException;
 use App\Lists\ListChangedException;
@@ -11,6 +12,7 @@ use App\Models\Filter\FilterConfigVersion;
 use App\Models\Filter\FilterListEntry;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 beforeEach(fn () => $this->signIn(User::factory()->admin()->withTwoFactor()->create()));
 
@@ -85,4 +87,22 @@ it('refuses viewers', function () {
     $this->signIn(User::factory()->viewer()->withTwoFactor()->create());
 
     expect(fn () => saveList(ListName::BlockedIps, '1.2.3.4'))->toThrow(AuthorizationException::class);
+});
+
+it('removes rows the parser would merge that were written elsewhere', function () {
+    FilterListEntry::query()->create(['list' => 'blocked_words', 'value' => 'Hack']);
+    FilterListEntry::query()->create(['list' => 'blocked_words', 'value' => 'hack']);
+
+    $result = saveList(ListName::BlockedWords, 'Hack');
+
+    expect($result->removed)->toBe(1)
+        ->and(FilterListEntry::query()->pluck('value')->all())->toBe(['Hack']);
+});
+
+it('reports a database duplicate as a list error instead of failing', function () {
+    $this->mock(ConfigStore::class, function ($mock): void {
+        $mock->shouldReceive('batch')->andThrow(new UniqueConstraintViolationException('filter', 'insert', [], new Exception('dup')));
+    });
+
+    expect(fn () => saveList(ListName::BlockedWords, 'hack'))->toThrow(InvalidListException::class, __('panel.lists.errors.collation'));
 });

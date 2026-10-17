@@ -44,7 +44,12 @@ final class IpRange
             throw new InvalidArgumentException('panel.lists.errors.prefix');
         }
 
-        return inet_ntop(self::mask($packed, (int) $prefix)).'/'.$prefix;
+        $prefix = (int) $prefix;
+
+        // A full-length prefix is one address: store it bare so it dedupes with the plain form.
+        return $prefix === $bits
+            ? (string) inet_ntop($packed)
+            : inet_ntop(self::mask($packed, $prefix)).'/'.$prefix;
     }
 
     /**
