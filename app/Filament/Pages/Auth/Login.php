@@ -4,9 +4,12 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Support\PanelMail;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -41,6 +44,18 @@ class Login extends BaseLogin
         }
 
         return $response;
+    }
+
+    protected function getPasswordFormComponent(): Component
+    {
+        $component = parent::getPasswordFormComponent();
+
+        // No "Forgot password?" link when the panel cannot send email.
+        if ($component instanceof TextInput && ! PanelMail::isConfigured()) {
+            $component->hint(null);
+        }
+
+        return $component;
     }
 
     private function refuseLockedOut(string $throttleKey, string $email): void

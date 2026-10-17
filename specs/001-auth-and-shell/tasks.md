@@ -84,24 +84,24 @@ description: "Tasks for 001 Admin Panel Shell"
 
 ### Tests (write first, must fail)
 
-- [ ] T032 [P] [US2] tests/Feature/Users/UserPolicyTest.php: owner can viewAny/create/update non-owner; admin and viewer get 403 on `/admin/users` and see no menu item; nobody can update/disable/delete the owner row or assign `owner`
-- [ ] T033 [P] [US2] tests/Feature/Users/ManageUsersTest.php (Livewire resource pages): create with role ∈ {admin, viewer}, unique email (case-insensitive), password policy; edit name/email/role; audit `user.created`/`user.updated` with only changed fields and no secrets
-- [ ] T034 [P] [US2] tests/Feature/Users/UserActionsTest.php: disable → `is_active=0`, sessions rows deleted, `user.disabled`; enable → `user.enabled`; reset password → `must_change_password=1`, sessions deleted, `user.password_reset`; reset 2FA → secret+codes null, sessions deleted, `user.two_factor_reset`; no delete action
-- [ ] T035 [P] [US2] tests/Feature/Auth/ForcedPasswordChangeTest.php: user with `must_change_password` is redirected to `/admin/change-password` from every page; after change flag cleared, `user.password_changed` audited
-- [ ] T036 [P] [US2] tests/Feature/Auth/DisabledUserTest.php: signed-in user disabled → next request logged out to sign-in
-- [ ] T037 [P] [US2] tests/Feature/Auth/PasswordResetTest.php: with `MAIL_MAILER=log` the forgot link is hidden and the request page returns 404; with mail enabled request shows neutral message for unknown email, sends notification for known; reset link works once and ends sessions; still requires 2FA after reset; `auth.password_reset_requested` + `auth.password_reset` audited
+- [X] T032 [P] [US2] tests/Feature/Users/UserPolicyTest.php: owner can viewAny/create/update non-owner; admin and viewer get 403 on `/admin/users` and see no menu item; nobody can update/disable/delete the owner row or assign `owner`
+- [X] T033 [P] [US2] tests/Feature/Users/ManageUsersTest.php (Livewire resource pages): create with role ∈ {admin, viewer}, unique email (case-insensitive), password policy; edit name/email/role; audit `user.created`/`user.updated` with only changed fields and no secrets
+- [X] T034 [P] [US2] tests/Feature/Users/UserActionsTest.php: disable → `is_active=0`, sessions rows deleted, `user.disabled`; enable → `user.enabled`; reset password → `must_change_password=1`, sessions deleted, `user.password_reset`; reset 2FA → secret+codes null, sessions deleted, `user.two_factor_reset`; no delete action
+- [X] T035 [P] [US2] tests/Feature/Auth/ForcedPasswordChangeTest.php: user with `must_change_password` is redirected to `/admin/change-password` from every page; after change flag cleared, `user.password_changed` audited
+- [X] T036 [P] [US2] tests/Feature/Auth/DisabledUserTest.php: signed-in user disabled → next request logged out to sign-in
+- [X] T037 [P] [US2] tests/Feature/Auth/PasswordResetTest.php: with `MAIL_MAILER=log` the forgot link is hidden and the request page returns 404; with mail enabled request shows neutral message for unknown email, sends notification for known; reset link works once and ends sessions; still requires 2FA after reset; `auth.password_reset_requested` + `auth.password_reset` audited
 
 ### Implementation
 
-- [ ] T038 [US2] Create app/Policies/UserPolicy.php (owner-only; owner row immutable for role/is_active/delete; `delete` always false) and register via `Gate::policy` in AppServiceProvider
-- [ ] T039 [US2] Create app/Observers/UserObserver.php: `created` → `user.created` ({name,email,role}), `updated` → `user.updated` with dirty fields among name/email/role/locale/theme only; `is_active` changes → `user.disabled`/`user.enabled`
-- [ ] T040 [US2] Create app/Filament/Resources/Users/UserResource.php (+ Pages List/Create/Edit, Schemas/UserForm.php, Tables/UsersTable.php) in group Administration: form fields name, email, role (select from `UserRole::assignable()`), password on create (`Password::defaults()`, confirmed) → sets `must_change_password=1`; table columns name, email, role badge, active, 2FA enrolled, last sign-in; row actions Disable/Enable, Reset password (modal with new password), Reset two-factor (confirm) – hidden for the owner row
-- [ ] T041 [US2] Create app/Support/EndUserSessions.php helper (delete `sessions` rows by `user_id`, rotate `remember_token`) used by actions, console reset and password reset listener
-- [ ] T042 [US2] Create app/Http/Middleware/EnsureUserIsActive.php and app/Http/Middleware/EnsurePasswordIsChanged.php; add both to `authMiddleware()` after `Authenticate`
+- [X] T038 [US2] Create app/Policies/UserPolicy.php (owner-only; owner row immutable for role/is_active/delete; `delete` always false) and register via `Gate::policy` in AppServiceProvider
+- [X] T039 [US2] Create app/Observers/UserObserver.php: `created` → `user.created` ({name,email,role}), `updated` → `user.updated` with dirty fields among name/email/role/locale/theme only; `is_active` changes → `user.disabled`/`user.enabled`
+- [X] T040 [US2] Create app/Filament/Resources/Users/UserResource.php (+ Pages List/Create/Edit, Schemas/UserForm.php, Tables/UsersTable.php) in group Administration: form fields name, email, role (select from `UserRole::assignable()`), password on create (`Password::defaults()`, confirmed) → sets `must_change_password=1`; table columns name, email, role badge, active, 2FA enrolled, last sign-in; row actions Disable/Enable, Reset password (modal with new password), Reset two-factor (confirm) – hidden for the owner row
+- [X] T041 [US2] Create app/Support/EndUserSessions.php helper (delete `sessions` rows by `user_id`, rotate `remember_token`) used by actions, console reset and password reset listener
+- [X] T042 [US2] Create app/Http/Middleware/Authenticate.php (extends Filament Authenticate; signs out disabled users, since Laravel middleware priority runs Authenticate first) and app/Http/Middleware/EnsurePasswordIsChanged.php after it
 - [X] T042a [US1] Create app/Http/Middleware/PreventBackHistory.php setting `Cache-Control: no-store, no-cache, must-revalidate, private` and `Pragma: no-cache` on every panel response; add to panel `middleware()`; test in tests/Feature/Auth/AccessTest.php (header present on `/admin` and `/admin/login`)
-- [ ] T043 [US2] Create app/Filament/Pages/ChangePassword.php (current password, new password `Password::defaults()` confirmed; clears flag; audit `user.password_changed`; hidden from navigation)
-- [ ] T044 [US2] Enable email reset in AdminPanelProvider: `->passwordReset()` only when `config('mail.default')` not in [`log`, `array`]; set `auth.passwords.users.expire=60`; listener for `PasswordReset` event → audit + EndUserSessions; audit `auth.password_reset_requested` from a custom `RequestPasswordReset` page (neutral response unchanged)
-- [ ] T045 [US2] Make T032–T037 pass; phpstan; pint
+- [X] T043 [US2] Create app/Filament/Pages/ChangePassword.php (current password, new password `Password::defaults()` confirmed; clears flag; audit `user.password_changed`; hidden from navigation)
+- [X] T044 [US2] Enable email reset in AdminPanelProvider: `->passwordReset()` only when `config('mail.default')` not in [`log`, `array`]; set `auth.passwords.users.expire=60`; listener for `PasswordReset` event → audit + EndUserSessions; audit `auth.password_reset_requested` from a custom `RequestPasswordReset` page (neutral response unchanged)
+- [X] T045 [US2] Make T032–T037 pass; phpstan; pint
 
 **Checkpoint**: owner shares access safely.
 

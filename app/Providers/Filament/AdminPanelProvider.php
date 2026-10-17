@@ -4,9 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Auth\MandatoryAppAuthentication;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\RequestPasswordReset;
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\RestrictToAllowedIps;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -37,6 +39,7 @@ class AdminPanelProvider extends PanelProvider
                 [MandatoryAppAuthentication::make()->recoverable()->recoveryCodeCount(8)],
                 isRequired: true,
             )
+            ->passwordReset(RequestPasswordReset::class)
             ->profile()
             ->colors([
                 'primary' => Color::Amber,
@@ -73,6 +76,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsurePasswordIsChanged::class,
             ]);
     }
 }

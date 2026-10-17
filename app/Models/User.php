@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
@@ -12,6 +13,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -32,6 +34,7 @@ use LogicException;
  * @property string $theme
  * @property Carbon|null $last_login_at
  */
+#[ObservedBy(UserObserver::class)]
 #[Fillable(['name', 'email', 'password', 'role', 'is_active', 'must_change_password', 'locale', 'theme'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
@@ -65,6 +68,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function isOwner(): bool
     {
         return $this->role === UserRole::Owner;
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return filled($this->app_authentication_secret);
     }
 
     /**
