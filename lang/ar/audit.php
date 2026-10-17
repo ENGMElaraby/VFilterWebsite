@@ -38,6 +38,8 @@ return [
         'ga_permissions.deleted' => 'حذف مساعد اللعبة',
         'command.queued' => 'أُرسل أمر',
         'command.cancelled' => 'أُلغي أمر',
+        'logs.exported' => 'تصدير السجلات',
+        'logs.pruned' => 'تنظيف السجلات القديمة',
     ],
 
     'actor_types' => [

@@ -76,6 +76,9 @@ php artisan test          # Pest
   `App\Filter\DatabaseClock` (the DB server's clock). Read status through `App\Filter\FilterOverview`.
 - Game DB connections `account`/`shard`/`log` are configured only when `DB_ACCOUNT_DATABASE` /
   `DB_SHARD_DATABASE` / `DB_LOG_DATABASE` is set (host/credentials default to `DB_*`, override with `DB_GAME_*`).
+- Log searches go through `App\Logs\LogQuery` with `LogFilters` (always time-bounded). Old logs are removed only
+  by `vfilter:prune-logs` (`App\Logs\LogPruner`); retention is `logs.retention_days` via `App\Logs\LogRetention`.
+- Changing filter settings is the `manage-filter-settings` gate (admin, owner).
 - Filament renders an action even when it is hidden: in custom views echo only actions that pass `isVisible()`
   (see `ModuleStatusWidget::visibleActions()`).
 - Never store or show SQL passwords in plain text. They go in `.env`, not in the database.

@@ -38,6 +38,8 @@ return [
         'ga_permissions.deleted' => 'Game Assistant removed',
         'command.queued' => 'Command queued',
         'command.cancelled' => 'Command cancelled',
+        'logs.exported' => 'Logs exported',
+        'logs.pruned' => 'Old logs cleaned up',
     ],
 
     'actor_types' => [

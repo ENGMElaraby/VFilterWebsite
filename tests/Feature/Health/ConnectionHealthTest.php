@@ -102,3 +102,17 @@ it('gives up on an unreachable SQL Server within the time budget', function () {
     expect(microtime(true) - $started)->toBeLessThan(ConnectionHealthCheck::TIMEOUT_SECONDS + 1)
         ->and($result->state)->toBe(HealthResult::UNREACHABLE);
 })->group('sqlsrv');
+
+it('limits how often one user can run the check', function () {
+    $this->signIn(User::factory()->viewer()->withTwoFactor()->create());
+    $page = Livewire::test(ConnectionHealth::class);
+
+    foreach (range(1, 5) as $run) {
+        $page->callAction('runCheck');
+    }
+
+    $page->set('results', null)
+        ->callAction('runCheck')
+        ->assertNotified()
+        ->assertSet('results', null);
+});

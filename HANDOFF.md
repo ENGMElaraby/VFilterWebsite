@@ -2,7 +2,8 @@
 
 **Date:** 2026-10-17 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
 (PR #1 open). Feature **002-contract-schema is built** (branch `002-contract-schema`, from 001). Feature
-**003-dashboard-and-control is built** (branch `003-dashboard-and-control`, from 002). Next: `004-logs`.
+**003-dashboard-and-control is built** (branch `003-dashboard-and-control`, from 002). Feature **004-logs is built**
+(branch `004-logs`, from 003). **Phase 1 (001–004) is complete.** Next: `005-security-lists`.
 
 ## What exists
 | Path | What |
@@ -10,11 +11,12 @@
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.0 draft (tables built in 002; `cancelled` command status in 003) |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.1 draft (tables built in 002; `cancelled` command status in 003; kick/ban payloads in 004) |
 | `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
 | `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
 | `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
 | `specs/003-dashboard-and-control/` | Dashboard, commands, Modules page, connection health (done) |
+| `specs/004-logs/` | Logs search/live/export, retention prune, sessions kick/ban (done) |
 | `app/`, `database/`, `lang/`, `tests/` | The Laravel app: sign-in + 2FA, users, audit log, EN/AR |
 | `docs/maxiguard-feature-map.md` | All 50 MaxiGuard panel pages we're matching |
 
@@ -32,6 +34,10 @@
 - Dashboard (003): status polls every 5 s; "online" = heartbeat < 15 s by the DB clock. Admins/owner queue
   Start/Stop/Restart (per module, All agents = one command per agent, All), gateway mode, and Cancel while
   pending. Viewers are read-only and see real module addresses masked.
+- Logs (004): searches are always time-bounded (default last 24 h) and exact-match; export max 100k rows.
+  Ban = game account ban with a chosen duration (1 h/1 d/7 d/30 d/permanent) + reason, applied by the filter.
+- **Production needs the Laravel scheduler** (`php artisan schedule:run` every minute, e.g. Windows Task
+  Scheduler) so `vfilter:prune-logs` runs daily at 03:30.
 
 ## Open questions (answer in `/speckit-clarify`)
 1. SQL Server version and host. Will the panel run on the same Windows server as SRO, or elsewhere?
@@ -68,7 +74,7 @@ Run these in order. Each one runs specify → clarify → plan → tasks → ana
 ```
 /speckit-specify Dashboard like MaxiGuard Filter Control: per-module status cards from filter_status (online if heartbeat < 15s), online player count, Start/Restart/Stop for Gateway/Agent/All and gateway mode switch GM/Inspection/Public, all via filter_commands with live command status. Includes Modules page (filter_modules: 1 gateway, 1 download, 1-5 agents, module IP/port, guard IP/port) and a read-only DB connection health check.
 ```
-**004-logs**
+**004-logs** — ✅ done (branch `004-logs`)
 ```
 /speckit-specify Logs viewer for filter_logs: filters by level, category, module, IP, username, charname, opcode and time range; live tail; export CSV; retention setting logs.retention_days with a scheduled prune job; live sessions page from filter_sessions with kick/ban actions via filter_commands.
 ```

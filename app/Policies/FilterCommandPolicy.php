@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\Filter\CommandStatus;
 use App\Enums\UserRole;
 use App\Models\Filter\FilterCommand;
 use App\Models\User;
@@ -22,8 +21,11 @@ class FilterCommandPolicy
         return $actor->role->atLeast(UserRole::Admin);
     }
 
+    /**
+     * Whether the command is still pending is decided by CommandQueue::cancel() at write time.
+     */
     public function cancel(User $actor, FilterCommand $command): bool
     {
-        return $actor->role->atLeast(UserRole::Admin) && $command->status === CommandStatus::Pending;
+        return $actor->role->atLeast(UserRole::Admin);
     }
 }

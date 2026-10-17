@@ -9,12 +9,14 @@ enum CommandGroup: string
 {
     case Power = 'power';
     case GatewayMode = 'gateway_mode';
+    case Player = 'player';
 
     public static function for(CommandName $command): ?self
     {
         return match ($command) {
             CommandName::Start, CommandName::Stop, CommandName::Restart => self::Power,
             CommandName::SetGatewayMode => self::GatewayMode,
+            CommandName::Kick, CommandName::Ban => self::Player,
             default => null,
         };
     }
@@ -27,6 +29,7 @@ enum CommandGroup: string
         return match ($this) {
             self::Power => [CommandName::Start, CommandName::Stop, CommandName::Restart],
             self::GatewayMode => [CommandName::SetGatewayMode],
+            self::Player => [CommandName::Kick, CommandName::Ban],
         };
     }
 }

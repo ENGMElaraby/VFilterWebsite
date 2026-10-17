@@ -67,3 +67,9 @@ it('shows the pending mode on the gateway card until the change is done', functi
     $command->forceFill(['status' => CommandStatus::Done])->save();
     expect(gatewayCard()->pendingMode)->toBeNull();
 });
+
+it('allows re-sending the last reported mode while the gateway is offline', function () {
+    reportStatus('Gateway', ['gateway_mode' => GatewayMode::Gm->value, 'heartbeat_at' => now('UTC')->subMinutes(5)]);
+
+    expect(app(CommandQueue::class)->setGatewayMode(GatewayMode::Gm)->payload)->toBe(['mode' => 'gm']);
+});

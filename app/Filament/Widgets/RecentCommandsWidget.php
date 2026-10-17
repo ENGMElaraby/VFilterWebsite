@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Filter\CommandGroup;
+use App\Enums\Filter\CommandName;
 use App\Enums\Filter\CommandStatus;
 use App\Filter\CommandQueue;
 use App\Filter\CommandRow;
@@ -42,7 +44,7 @@ class RecentCommandsWidget extends TableWidget
 
         return $table
             ->heading(__('panel.commands.recent'))
-            ->query(FilterCommand::query()->latest('id')->limit(FilterOverview::RECENT_COMMANDS))
+            ->query(FilterCommand::query()->knownValues()->latest('id')->limit(FilterOverview::RECENT_COMMANDS))
             ->paginated(false)
             ->poll('5s')
             ->columns([
@@ -51,7 +53,11 @@ class RecentCommandsWidget extends TableWidget
                     ->formatStateUsing(fn (FilterCommand $record): string => $this->commandLabel($record)),
                 TextColumn::make('target')
                     ->label(__('panel.commands.fields.target'))
-                    ->formatStateUsing(fn (string $state): string => $state === CommandQueue::ALL ? __('panel.commands.targets.all') : ucfirst($state)),
+                    ->formatStateUsing(fn (FilterCommand $record, string $state): string => match (true) {
+                        $state === CommandQueue::ALL => __('panel.commands.targets.all'),
+                        CommandGroup::for($record->command) === CommandGroup::Player => $state,
+                        default => ucfirst($state),
+                    }),
                 TextColumn::make('created_by')
                     ->label(__('panel.commands.fields.requested_by'))
                     ->formatStateUsing(fn (FilterCommand $record): string => $this->row($record)->requestedBy ?? '#'.$record->created_by),
@@ -87,7 +93,7 @@ class RecentCommandsWidget extends TableWidget
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalDescription(__('panel.commands.cancel_confirm'))
-                    ->visible(fn (FilterCommand $record): bool => Gate::allows('cancel', $record))
+                    ->visible(fn (FilterCommand $record): bool => $record->status === CommandStatus::Pending && Gate::allows('cancel', $record))
                     ->action(function (FilterCommand $record): void {
                         try {
                             app(CommandQueue::class)->cancel($record);
@@ -113,7 +119,17 @@ class RecentCommandsWidget extends TableWidget
         $label = __('panel.commands.names.'.$record->command->value);
         $mode = $this->row($record)?->mode;
 
-        return $mode === null ? $label : $label.' → '.__('panel.gateway_modes.'.$mode->value);
+        if ($mode !== null) {
+            return $label.' → '.__('panel.gateway_modes.'.$mode->value);
+        }
+
+        if ($record->command !== CommandName::Ban) {
+            return $label;
+        }
+
+        $minutes = $record->payload['duration_minutes'] ?? null;
+
+        return $label.' ('.__('panel.sessions.durations.'.($minutes === null ? 'permanent' : (int) $minutes)).')';
     }
 
     private function flag(FilterCommand $record): ?string
