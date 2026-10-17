@@ -7,6 +7,7 @@ use App\Logs\LogQuery;
 use App\Models\Filter\FilterLog;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-17 12:00:00', 'UTC')));
 
@@ -90,7 +91,7 @@ it('refuses values longer than their column', function () {
 });
 
 it('ignores letter case on SQL Server without COLLATE', function () {
-    if (Illuminate\Support\Facades\DB::connection('filter')->getDriverName() !== 'sqlsrv') {
+    if (DB::connection('filter')->getDriverName() !== 'sqlsrv') {
         $this->markTestSkipped('Needs SQL Server (DB_FILTER_DRIVER=sqlsrv).');
     }
 
