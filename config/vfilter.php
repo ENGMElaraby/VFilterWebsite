@@ -7,6 +7,9 @@ return [
     // Panel IP allow-list (IPs or CIDRs). Empty = off.
     'allowed_ips' => $csv(env('PANEL_ALLOWED_IPS')),
 
+    // Reverse proxies in front of the panel (IIS/Nginx). '*' trusts all.
+    'trusted_proxies' => $csv(env('TRUSTED_PROXIES')),
+
     // Time zone used to display times. Storage is always UTC.
     'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'UTC'),
 
