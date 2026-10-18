@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 const PANEL_ACCESS = [
     'filament.admin.pages.dashboard' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.pages.connection-health' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
+    'filament.admin.pages.notices' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.filter-modules.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.filter-modules.edit' => ['guest' => 'login', 'viewer' => 'deny', 'admin' => 'ok', 'owner' => 'ok'],
     'filament.admin.resources.filter-logs.index' => ['guest' => 'login', 'viewer' => 'ok', 'admin' => 'ok', 'owner' => 'ok'],

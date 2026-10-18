@@ -28,6 +28,7 @@ it('kicks by character, else username, else IP', function (array $names, string 
 ]);
 
 it('bans the game account for a chosen time', function (?int $minutes) {
+    config(['vfilter.timed_bans' => true]);
     $session = FilterSession::factory()->create(['username' => 'sara', 'charname' => 'Knight']);
 
     $command = app(CommandQueue::class)->ban($session, 'speed hack', $minutes);

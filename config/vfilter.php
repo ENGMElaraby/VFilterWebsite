@@ -13,6 +13,10 @@ return [
     // Time zone used to display times. Storage is always UTC.
     'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'UTC'),
 
+    // Offer timed bans (1 h–30 d) in the ban dialog. Off while the filter side cannot apply them:
+    // AegisCore fails every timed ban (contract 0.3.4).
+    'timed_bans' => (bool) env('VFILTER_TIMED_BANS', false),
+
     'login' => [
         'max_attempts' => 5,
         'decay_seconds' => 60,

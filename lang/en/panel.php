@@ -320,6 +320,26 @@ return [
         ],
         'kick_queued' => 'Kick queued for :target.',
         'ban_queued' => 'Ban queued for :target.',
+        'errors' => [
+            'timed_bans_off' => 'Timed bans are turned off. Choose Permanent.',
+        ],
+    ],
+
+    'notices' => [
+        'title' => 'Notices',
+        'subheading' => 'Send a system notice to every player in the game.',
+        'message' => 'Message',
+        'message_help' => 'One line, up to :max characters. Players see it as a system notice.',
+        'send' => 'Send notice',
+        'send_confirm' => 'Send this notice to every player in the game?',
+        'queued' => 'Notice queued for all players.',
+        'recent' => 'Recent notices',
+        'errors' => [
+            'required' => 'Write a message.',
+            'too_long' => 'The message can be at most :max characters.',
+            'one_line' => 'The message must be one line, without line breaks or tabs.',
+            'duplicate' => 'This notice is already waiting to be sent.',
+        ],
     ],
 
     'lists' => [

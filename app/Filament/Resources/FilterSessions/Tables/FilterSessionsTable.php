@@ -27,6 +27,8 @@ class FilterSessionsTable
 
     private const PERMANENT = 'permanent';
 
+    private const DEFAULT_BAN_MINUTES = 1440;
+
     public static function configure(Table $table): Table
     {
         $zone = (string) config('vfilter.display_timezone');
@@ -78,13 +80,16 @@ class FilterSessionsTable
 
     private static function banAction(): Action
     {
+        // Only the lengths the filter side can apply (vfilter.timed_bans); Permanent is always offered.
+        $timed = app(CommandQueue::class)->banDurations();
         $durations = [];
 
-        foreach (CommandQueue::BAN_DURATIONS as $minutes) {
+        foreach ($timed as $minutes) {
             $durations[(string) $minutes] = __('panel.sessions.durations.'.$minutes);
         }
 
         $durations[self::PERMANENT] = __('panel.sessions.durations.permanent');
+        $default = in_array(self::DEFAULT_BAN_MINUTES, $timed, true) ? (string) self::DEFAULT_BAN_MINUTES : self::PERMANENT;
 
         return Action::make('ban')
             ->label(__('panel.sessions.ban'))
@@ -92,7 +97,7 @@ class FilterSessionsTable
             ->modalHeading(fn (FilterSession $record): string => __('panel.sessions.ban_heading', ['username' => $record->username]))
             ->visible(fn (FilterSession $record): bool => filled($record->username) && Gate::allows('create', FilterCommand::class))
             ->schema([
-                Select::make('duration')->label(__('panel.sessions.duration'))->options($durations)->default('1440')->required(),
+                Select::make('duration')->label(__('panel.sessions.duration'))->options($durations)->default($default)->required(),
                 Textarea::make('reason')->label(__('panel.sessions.reason'))->required()->maxLength(CommandQueue::REASON_MAX_LENGTH),
             ])
             ->action(fn (FilterSession $record, array $data) => self::attempt(function () use ($record, $data): string {
