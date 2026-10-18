@@ -4,7 +4,21 @@
 (PR #1 open). Feature **002-contract-schema is built** (branch `002-contract-schema`, from 001). Feature
 **003-dashboard-and-control is built** (branch `003-dashboard-and-control`, from 002). Feature **004-logs is built**
 (branch `004-logs`, from 003). **Phase 1 (001–004) is complete.** Feature **005-security-lists is built** (branch `005-security-lists`, from 004).
-Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (see `../VFilter/HANDOFF.md`).
+Next on the website: `006-settings-catalog`.
+
+## Architecture change (2026-10-18)
+The production game server is **AegisCore** (`ENGMElaraby/AegisCore-SRO`), and it implements the filter side of the
+contract natively. VFilter (C#) is now an optional edge shield. **Nothing changes for the website**: same DB, tables,
+commands and status rules. Contract 0.3.4 documents this.
+
+What AegisCore does with the website's commands:
+- **Start/Stop/Restart:** stop and start the real module containers.
+- **Ban:** permanent bans only for now. A timed ban fails with "timed bans not supported yet; choose Permanent".
+- **Notice:** works (payload `{"message": "..."}`).
+
+Website follow-ups:
+- A **notice page**: send a system notice to all players. Owner/admin only, audited.
+- Consider hiding the timed ban durations while AegisCore is the filter side.
 
 ## What exists
 | Path | What |
@@ -12,7 +26,7 @@ Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.2 draft (tables in 002; `cancelled` status in 003; kick/ban payloads in 004; list formats + `cafe_limit` in 005) |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.4 draft (tables in 002; `cancelled` status in 003; kick/ban payloads in 004; list formats + `cafe_limit` in 005; filter side may be AegisCore, `notice` payload in 0.3.4) |
 | `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
 | `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
 | `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
