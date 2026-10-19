@@ -34,6 +34,7 @@ it('filters by player', function () {
 });
 
 it('lets admins kick and ban, and shows them in recent commands', function () {
+    config(['vfilter.timed_bans' => true]);
     $this->signIn(User::factory()->admin()->withTwoFactor()->create());
     $kicked = FilterSession::factory()->create(['username' => 'ali', 'charname' => 'Rogue']);
     $banned = FilterSession::factory()->create(['username' => 'sara', 'charname' => 'Knight']);

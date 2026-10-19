@@ -10,6 +10,7 @@ use App\Enums\Filter\ModuleType;
 use App\Filter\Exceptions\CommandAlreadyStartedException;
 use App\Filter\Exceptions\CommandInProgressException;
 use App\Filter\Exceptions\GatewayModeUnchangedException;
+use App\Filter\Exceptions\NoticeAlreadyQueuedException;
 use App\Models\Filter\FilterCommand;
 use App\Models\Filter\FilterModule;
 use App\Models\Filter\FilterSession;
@@ -39,8 +40,13 @@ class CommandQueue
 
     private const GATEWAY = 'gateway';
 
-    /** Allowed ban lengths in minutes; null = permanent (contract 0.3.1). */
+    /** Timed ban lengths in minutes, offered only while `vfilter.timed_bans` is on; null = permanent (contract 0.3.1). */
     public const BAN_DURATIONS = [60, 1440, 10080, 43200];
+
+    /** The longest notice AegisCore sends (characters, not bytes). */
+    public const NOTICE_MAX_LENGTH = 200;
+
+    private const NOTICE_LOCK = 'notice';
 
     public const REASON_MAX_LENGTH = 200;
 
@@ -164,8 +170,10 @@ class CommandQueue
             throw new InvalidArgumentException('Only a logged-in account can be banned.');
         }
 
-        if ($durationMinutes !== null && ! in_array($durationMinutes, self::BAN_DURATIONS, true)) {
-            throw new InvalidArgumentException("Ban duration {$durationMinutes} is not allowed.");
+        if ($durationMinutes !== null && ! in_array($durationMinutes, $this->banDurations(), true)) {
+            throw new InvalidArgumentException(in_array($durationMinutes, self::BAN_DURATIONS, true)
+                ? __('panel.sessions.errors.timed_bans_off')
+                : "Ban duration {$durationMinutes} is not allowed.");
         }
 
         return $this->queuePlayer(CommandName::Ban, (string) $session->username, [
@@ -173,6 +181,56 @@ class CommandQueue
             'reason' => $this->assertReason($reason),
             'duration_minutes' => $durationMinutes,
         ]);
+    }
+
+    /**
+     * Timed ban lengths the filter side can apply; empty while timed bans are switched off.
+     *
+     * @return list<int>
+     */
+    public function banDurations(): array
+    {
+        return config('vfilter.timed_bans') === true ? self::BAN_DURATIONS : [];
+    }
+
+    /**
+     * Send a system notice to every in-world player (contract 0.3.4). The same message may not be queued
+     * twice while the first one is still pending or running.
+     */
+    public function notice(string $message): FilterCommand
+    {
+        Gate::authorize('create', FilterCommand::class);
+
+        $error = self::noticeError($message);
+
+        if ($error !== null) {
+            throw new InvalidArgumentException($error);
+        }
+
+        $message = trim($message);
+
+        return $this->locked(self::NOTICE_LOCK, fn (): FilterCommand => $this->audit->transaction(function () use ($message): FilterCommand {
+            if ($this->noticeInProgress($message)) {
+                throw new NoticeAlreadyQueuedException;
+            }
+
+            return $this->insert(CommandName::Notice, self::ALL, ['message' => $message]);
+        }));
+    }
+
+    /**
+     * Why the trimmed message cannot be sent as a notice, or null when it can.
+     */
+    public static function noticeError(string $message): ?string
+    {
+        $message = trim($message);
+
+        return match (true) {
+            $message === '' => __('panel.notices.errors.required'),
+            mb_strlen($message) > self::NOTICE_MAX_LENGTH => __('panel.notices.errors.too_long', ['max' => self::NOTICE_MAX_LENGTH]),
+            preg_match('/\p{Cc}/u', $message) !== 0 => __('panel.notices.errors.one_line'),
+            default => null,
+        };
     }
 
     public function cancel(FilterCommand $command): FilterCommand
@@ -258,6 +316,15 @@ class CommandQueue
             ->whereIn('command', $group->commands())
             ->whereIn('status', CommandStatus::inProgress())
             ->exists();
+    }
+
+    private function noticeInProgress(string $message): bool
+    {
+        return FilterCommand::query()
+            ->where('command', CommandName::Notice->value)
+            ->whereIn('status', CommandStatus::inProgress())
+            ->get(['payload'])
+            ->contains(fn (FilterCommand $row): bool => ($row->payload['message'] ?? null) === $message);
     }
 
     /**

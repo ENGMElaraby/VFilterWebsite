@@ -1,10 +1,25 @@
 # HANDOFF: VFilterWebsite
 
-**Date:** 2026-10-17 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
+**Date:** 2026-10-19 · **Status:** Laravel 13 + Filament 5 app scaffolded. Feature **001-auth-and-shell is built**
 (PR #1 open). Feature **002-contract-schema is built** (branch `002-contract-schema`, from 001). Feature
 **003-dashboard-and-control is built** (branch `003-dashboard-and-control`, from 002). Feature **004-logs is built**
 (branch `004-logs`, from 003). **Phase 1 (001–004) is complete.** Feature **005-security-lists is built** (branch `005-security-lists`, from 004).
-Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (see `../VFilter/HANDOFF.md`).
+Feature **006-notices is built** (branch `006-notices`, from the contract 0.3.4 branch).
+Next on the website: `007-settings-catalog`.
+
+## Architecture change (2026-10-18)
+The production game server is **AegisCore** (`ENGMElaraby/AegisCore-SRO`), and it implements the filter side of the
+contract natively. VFilter (C#) is now an optional edge shield. **Nothing changes for the website**: same DB, tables,
+commands and status rules. Contract 0.3.4 documents this.
+
+What AegisCore does with the website's commands:
+- **Start/Stop/Restart:** stop and start the real module containers.
+- **Ban:** permanent bans only for now. A timed ban fails with "timed bans not supported yet; choose Permanent".
+- **Notice:** works (payload `{"message": "..."}`).
+
+Website follow-ups (done in 006):
+- **Notices page** (`/admin/notices`): admins/owner send a system notice to all players; audited; Cancel while pending.
+- Timed ban durations are hidden unless `VFILTER_TIMED_BANS=true` (default false while AegisCore is the filter side).
 
 ## What exists
 | Path | What |
@@ -12,13 +27,14 @@ Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (
 | `CLAUDE.md` | Project guide for Claude Code (stack, commands, conventions) |
 | `.specify/memory/constitution.md` | Project rules, v1.0.0 (ratified) |
 | `.specify/` + `.claude/skills/speckit-*` | GitHub Spec Kit (Claude integration, `sh` scripts, git extension) |
-| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.2 draft (tables in 002; `cancelled` status in 003; kick/ban payloads in 004; list formats + `cafe_limit` in 005) |
+| `docs/shared-contract.md` | VFILTER DB contract shared with the filter, v0.3.4 draft (tables in 002; `cancelled` status in 003; kick/ban payloads in 004; list formats + `cafe_limit` in 005; filter side may be AegisCore, `notice` payload in 0.3.4) |
 | `docs/references.md` | Outside repos to read (AegisCore-SRO, silkroad-docs, …), ranked, with licenses |
 | `docs/features/silk-stall.md` | Planned Silk Stall feature (after the client DLL) |
 | `specs/001-auth-and-shell/` | Spec, plan, tasks for the panel shell (done) |
 | `specs/003-dashboard-and-control/` | Dashboard, commands, Modules page, connection health (done) |
 | `specs/004-logs/` | Logs search/live/export, retention prune, sessions kick/ban (done) |
 | `specs/005-security-lists/` | Security lists, Game Assistants grid, net cafe limits (done) |
+| `specs/006-notices/` | Notices page, timed-bans switch (done) |
 | `app/`, `database/`, `lang/`, `tests/` | The Laravel app: sign-in + 2FA, users, audit log, EN/AR |
 | `docs/maxiguard-feature-map.md` | All 50 MaxiGuard panel pages we're matching |
 
@@ -38,6 +54,9 @@ Next on the website: `006-settings-catalog`. Next overall: the VFilter C# side (
   pending. Viewers are read-only and see real module addresses masked.
 - Logs (004): searches are always time-bounded (default last 24 h) and exact-match; export max 100k rows.
   Ban = game account ban with a chosen duration (1 h/1 d/7 d/30 d/permanent) + reason, applied by the filter.
+- Notices (006): one line, 1–200 characters (AegisCore's limit); the same message can't be queued twice while
+  pending/running. Every role sees the list; admins/owner send and cancel.
+- Ban durations (006): `VFILTER_TIMED_BANS` (default false) — off = Permanent only, because AegisCore fails timed bans.
 - Security lists (005): every list is edited as rows (value + comment) except Blocked words, which is pasted
   text for bulk. IP allow/block lists accept CIDR ranges.
 - **Production needs the Laravel scheduler** (`php artisan schedule:run` every minute, e.g. Windows Task
@@ -86,11 +105,15 @@ Run these in order. Each one runs specify → clarify → plan → tasks → ana
 ```
 /speckit-specify Security pages backed by filter_lists and filter_ga_permissions: Allowed GM IPs, proxy-bypass IPs/usernames, Game Assistants with a per-command permission grid, Blocked IPs, Blocked HWIDs, Net Cafe IPs with special per-IP limits, blocked words. One value per line with // comments, validated.
 ```
-**006-settings-catalog**
+**006-notices** — ✅ done (branch `006-notices`)
+```
+/speckit-specify Notice page: owner and admin send a system notice to every in-world player (notice command, target all, payload message 1-200 chars, one line), with live status and Cancel; plus a VFILTER_TIMED_BANS switch for the ban dialog.
+```
+**007-settings-catalog**
 ```
 /speckit-specify Generate docs/settings-catalog.md and a PHP settings catalog covering every switch in the "Other Settings" section of docs/maxiguard-feature-map.md (38 tabs), with key, type, default, validation, restart requirement and EN/AR labels; render it as tabbed Filament settings pages saved via SettingsRepository. Drop EU-only options (server is Chinese only, cap 100).
 ```
-**007-area-rules**
+**008-area-rules**
 ```
 /speckit-specify One generic area-rule editor over filter_area_rules and filter_cooldowns covering every In-game restrictions page in docs/maxiguard-feature-map.md (cooldowns, teleports, trace, party, pets, skills, stall, alchemy, berserk, PK, items, resurrection, reverse, PVP-mode, region PC/IP limits, conditionals), with region/world pickers loaded from SRO_VT_SHARD.
 ```
