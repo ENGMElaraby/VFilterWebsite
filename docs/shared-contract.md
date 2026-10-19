@@ -1,6 +1,6 @@
 # VFilter Shared Contract (Website ⇄ Filter)
 
-**Version:** 0.3.3 (draft) · **Owner:** both repos · **Last updated:** 2026-10-17
+**Version:** 0.4.0 (draft) · **Owner:** both repos · **Last updated:** 2026-10-19
 
 The website (VFilterWebsite, Laravel) and the filter (VFilter, C#) never talk to each other directly.
 They share **one SQL Server database, `VFILTER`**, that sits next to the game databases.
@@ -67,6 +67,16 @@ Limits: exactly 1 gateway, 1 download, 1–5 agents (`Agent1`… in order, no ga
 
 The canonical key list lives in `docs/settings-catalog.md` (feature 006).
 
+**Server Files settings** (VFilter 003; group `server_files`; the website installs the defaults):
+
+| key | type | default | requires_restart |
+| --- | --- | --- | --- |
+| `server_files.disable_bsobj_errors` | bool | `1` | `gameserver` |
+| `server_files.disable_dump_creation` | bool | `1` | `gameserver` |
+| `gameserver.exe_path` | string | `C:\Files\SR_GameServer.exe` | `none` |
+| `gameserver.start_with_vfilter` | bool | `0` | `filter` |
+| `gameserver.stop_timeout_seconds` | int (10–600) | `60` | `none` |
+
 ### filter_lists  (area `lists`)
 | column | type | null | notes |
 | --- | --- | --- | --- |
@@ -112,7 +122,7 @@ Indexes: `(rule, enabled)`, `(area)`.
 | --- | --- | --- | --- |
 | id | bigint identity PK | no | |
 | command | nvarchar(32) | no | | `start`, `stop`, `restart`, `set_gateway_mode`, `reload`, `kick`, `notice`, `ban` |
-| target | nvarchar(64) | no | | `all`, `gateway`, `download`, `agent1`…`agent5` (lower-case module name), or username/charname |
+| target | nvarchar(64) | no | | `all`, `gateway`, `download`, `agent1`…`agent5` (lower-case module name), `gameserver`, or username/charname |
 | payload | nvarchar(max) | yes | | JSON |
 | status | nvarchar(16) | no | `pending` | `pending` → `running` → `done` \| `failed`; or `pending` → `cancelled` (website) |
 | result | nvarchar(max) | yes | |
@@ -127,6 +137,11 @@ changed. The website cancels with the mirror statement (`… SET status='cancell
 status='pending'`), so a command is either run or cancelled, never both. The filter ignores
 `cancelled` rows. The website queues at most one pending/running `start`/`stop`/`restart` per target and
 one `set_gateway_mode` at a time. `set_gateway_mode` payload: `{"mode":"gm"|"inspection"|"public"}`.
+
+**GameServer.** `start`, `stop` and `restart` accept target `gameserver`: the SR_GameServer process, which VFilter starts
+itself so it can load its GameServer hooks (VFilter 003). `all` does not include `gameserver`, because the GameServer's
+prerequisites (Cert, managers, ShardManager) are started outside VFilter. `stop` closes the GameServer normally and
+forces it only after `gameserver.stop_timeout_seconds`.
 
 **Kick and ban payloads.** `kick`: target = charname, else username, else IP; payload
 `{"session_id":123,"ip":"1.2.3.4","reason":null}`. `ban`: target = username (game account); payload
@@ -154,6 +169,12 @@ error), `public`. The filter starts in `gm` unless `server.start_in_inspection` 
 | started_at | datetime2(3) | yes | |
 | heartbeat_at | datetime2(3) | yes | | > 15 s old = offline |
 | last_error | nvarchar(max) | yes | |
+| details | nvarchar(max) | yes | | JSON; NULL for proxy modules |
+
+VFilter writes a `GameServer` row once it has started the GameServer. Its `details`:
+`{"hooks":"active|partial|failed|not_loaded|loading","switches":["bsobj","dump"],"hook_errors":[],"window":true,
+"loaded_at":"…Z","suppressed":{"messages":0,"dumps":0},"restart_needed":[]}`. The website shows the fields it knows
+and ignores the rest.
 
 ### filter_sessions  (filter writes)
 | column | type | null |
@@ -183,6 +204,8 @@ Indexes: `(module)`, `(username)`, `(ip)`.
 | opcode | nvarchar(8) | yes |
 | message | nvarchar(1024) | no |
 | data | nvarchar(max) | yes |
+`category`: `connection`, `login`, `exploit`, `flood`, `limit`, `restriction`, `command`, `chat`, `gm`, `server`
+(GameServer warnings, dump skips, GameServer start/stop/crash).
 Indexes: `(ts)`, `(category, ts)`, `(username)`, `(ip)`. Retention via `logs.retention_days` (website job prunes).
 
 ### filter_config_version  (one row per configuration area)
@@ -196,6 +219,8 @@ Their columns are defined by the website in `VFilterWebsite/specs/001-auth-and-s
 (the filter never reads them, so they are not repeated here).
 
 ## Changelog
+- 0.4.0 (2026-10-19, MINOR): `gameserver` command target, `filter_status.details`, log category `server`,
+  Server Files settings (VFilter 003).
 - 0.3.3 (2026-10-17, PATCH): command expiry, interim notice/ban results, database-clock timestamps (VFilter 001).
 - 0.3.2 (2026-10-17, PATCH): list names and formats (CIDR), `cafe_limit` rule (feature 005).
 - 0.3.1 (2026-10-17, PATCH): kick/ban payload shapes (feature 004).

@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $started_at
  * @property Carbon|null $heartbeat_at
  * @property string|null $last_error
+ * @property array<string, mixed>|null $details
  */
 class FilterStatus extends Model
 {
@@ -46,6 +47,7 @@ class FilterStatus extends Model
             'connections' => 'integer',
             'started_at' => 'datetime',
             'heartbeat_at' => 'datetime',
+            'details' => 'array',
         ];
     }
 }

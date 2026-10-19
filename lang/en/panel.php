@@ -274,6 +274,7 @@ return [
             'command' => 'Command',
             'chat' => 'Chat',
             'gm' => 'GM',
+            'server' => 'Game server',
         ],
         'live' => 'Live',
         'pause' => 'Pause',

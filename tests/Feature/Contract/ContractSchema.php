@@ -89,7 +89,7 @@ final class ContractSchema
                     'online_count' => ['int', false], 'connections' => ['int', false],
                     'gateway_mode' => ['nvarchar(16)', true], 'version' => ['nvarchar(32)', true],
                     'started_at' => ['datetime2', true], 'heartbeat_at' => ['datetime2', true],
-                    'last_error' => ['nvarchar(max)', true],
+                    'last_error' => ['nvarchar(max)', true], 'details' => ['nvarchar(max)', true],
                 ],
                 'primary' => ['module'],
                 'indexes' => [],

@@ -16,4 +16,5 @@ enum LogCategory: string
     case Command = 'command';
     case Chat = 'chat';
     case Gm = 'gm';
+    case Server = 'server';
 }
